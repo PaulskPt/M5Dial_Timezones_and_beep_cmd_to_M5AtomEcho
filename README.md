@@ -16,7 +16,7 @@ Hardware used:
     2) M5Stack M5Atom Echo;
     3) GROVE 4-wire cable;
 
-The software consists of two parts: a) for the M5Dial; b) for the MtAtom Echo.
+The software consists of two parts: a) for the M5Dial; b) for the M5Atom Echo.
 
 The M5Dial part:
 
