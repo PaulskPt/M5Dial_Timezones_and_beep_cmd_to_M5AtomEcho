@@ -13,7 +13,7 @@ Note: the beep sounds, when pressed the button on top of the Atom Echo or when r
 	  Added code to control the builtin RGB led. In setup() the Led will be set to show RED color.
 	  When M5.Btn.wasPressed() the Led will be set to show GREEN color. At the end of the beeps the Led will be set back to RED color.
 	  
-	  Added code to "listen" via the GROVE PORT for an impulse from the M5Dial as an indication (read: command) to beep the speaker
+	  Added code to "listen" via the GROVE PORT, Pin 1, for an impulse from the M5Dial as an indication (read: command) to beep the speaker
 
 Monitor compilation output:
 
