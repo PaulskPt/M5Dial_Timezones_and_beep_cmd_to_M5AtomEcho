@@ -7,7 +7,7 @@ IDE: Arduino IDE v2.3.3
 Sketch: M5Atom_EchoSPKR_beep_on_command_M5Dial.ino
 (with: AtomEchoSPKR.h and AtomEchoSPKR.cpp (moderately modified for use with the Atom Echo instead of the Atom SPK. Also changed the class name to ATOMECHOSPKR)
 
-Note: the beep sounds, when presed the button on top of the Atom Echo or when received a "beep command" from the M5Dial, sounded excellent!
+Note: the beep sounds, when pressed the button on top of the Atom Echo or when received a "beep command" from the M5Dial, sounded excellent!
       Button response is immediate.
 	  
 	  Added code to control the builtin RGB led. In setup() the Led will be set to show RED color.
