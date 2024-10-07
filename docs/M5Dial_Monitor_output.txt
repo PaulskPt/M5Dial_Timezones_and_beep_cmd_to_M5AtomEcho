@@ -33,11 +33,5 @@ Monitor output:
 17:51:23.055 -> time_sync_notification_cb(): time synchronized at time (UTC): Mon Oct  7 16:51:28 2024
 17:51:23.055 -> mtp_sync_notification_txt(): Sending cmd to beep to Atom Echo
 17:52:57.633 -> 
-17:52:57.633 -> WiFi Connected
-17:52:57.667 -> sntp_initialize(): sntp polling interval: 15 Minute(s)
-17:52:57.667 -> setup(): sntp_sync_status = RESET
-17:52:59.005 -> time_sync_notification_cb(): time synchronized at time (UTC): Mon Oct  7 16:53:04 2024
-17:52:59.545 -> mtp_sync_notification_txt(): Sending cmd to beep to Atom Echo
-17:53:09.769 -> 
 
 [...]
