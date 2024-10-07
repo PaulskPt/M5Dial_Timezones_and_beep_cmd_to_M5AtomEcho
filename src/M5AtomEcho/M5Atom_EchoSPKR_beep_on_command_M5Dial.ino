@@ -143,12 +143,12 @@ void loop()
         //Serial.printf("%sSignal on line1 received from M5Dial = %d\n", signal1);
         signal1 = -1; // reset
         Serial.printf("%sBeep command received from M5Dial\n", TAG);
-        LedColor(GREEN);
-        Serial.printf("%s%sGREEN%s\n", TAG, txt1, txt2);
       }
       else if ( M5.Btn.wasPressed())
         Serial.printf("%sButton was pressed\n", TAG);
       
+      LedColor(GREEN);
+      Serial.printf("%s%sGREEN%s\n", TAG, txt1, txt2);
       for (int i = 0; i < 2; i++)  // play a double tone
       {
         echoSPKR.playBeep(tone1);
