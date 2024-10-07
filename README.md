@@ -98,7 +98,7 @@ The M5Atom Echo part:
 
 After applying power to the M5 Echo Atom device, the sketch will wait for a "beep command" impulse on the GROVE PORT pin1, sent by the M5Dial device, or a button press of the button on top of the M5Atom Echo device. Upon pressing the button or receiving a "beep command", a double tone sound will be produced and the RGB Led wil be set to GREEN at the start of the beeps. After the beeps have finished, the RGB Led will be set to RED.
 
-The sketch ```M5Atem_EchoSPKR_beep_on_command_M5Dial.ino``` uses two files: ```AntomEchoSPKR.h``` and ```AntomEchoSPKR.cpp```,
+The sketch ```M5Atom_EchoSPKR_beep_on_command_M5Dial.ino``` uses two files: ```AntomEchoSPKR.h``` and ```AntomEchoSPKR.cpp```,
 which last two files define the ```class ATOMECHOSPKR```, used by the sketch.
 The sketch has functionality to make the M5Atom Echo device to "listen" on Pin1 of the GROVE PORT for a digital impulse (read: beep command)
 sent by the M5Dial at moment of a NTP Time Synchronization.
