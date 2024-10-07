@@ -31,7 +31,7 @@ Monitor compilation output:
 18:03:02.642 -> M5Stack M5Atom Echo new "ATOMECHOSPKR class" beep test
 18:03:02.642 -> setup(): builtin RGB Led set to: RED color
 18:03:02.642 -> ATOMECHOSPKR::begin(): rate = 88200
-18:03:02.642 -> E (90) I2S: i2s_driver_uninstall(2048): I2S port 0 has not installed
+18:03:02.642 -> E (90) I2S: i2s_driver_uninstall(2048): I2S port 0 has not installed  <<<=== This is no problem because there was no driver installed at reset.
 18:03:02.642 -> ATOMECHOSPKR::begin(): i2s_driver_installing
 18:03:02.642 -> ATOMECHOSPKR::begin(): i2s_set_pin
 18:03:02.642 -> ATOMECHOSPKR::begin(): i2s_set_clkATOMECHOSPKR::setVolume(): setting volume to: 8
