@@ -25,10 +25,6 @@ Monitor output:
 17:51:14.119 -> load:0x403cc700,len:0x2a80
 17:51:14.119 -> entry 0x403c98d0
 17:51:14.509 -> 
-17:51:14.555 -> 
-17:51:14.555 -> M5Stack M5Dial Timezones test.
-17:51:18.600 -> 
-17:51:14.555 -> 
 17:51:14.555 -> M5Stack M5Dial Timezones test.
 17:51:18.600 -> 
 17:51:18.600 -> WiFi Connected
