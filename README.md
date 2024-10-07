@@ -32,7 +32,7 @@ For each of the six timezones, in four steps, the following data will be display
 Each time zone sequence of four displays is repeated for 25 seconds. This repeat time is defined in function ```loop()```:
 
 ```
-894 unsigned long zone_chg_interval_t = 25000L; // 25 seconds
+920 unsigned long zone_chg_interval_t = 25000L; // 25 seconds
 ```
 
 M5Dial sound:
@@ -44,7 +44,7 @@ and in this repo, I added functionality to "use" the ability of the M5Atom Echo 
 The function spkr() is called at the moment of NTP Time Synchronization. To control the sound I added a global variable:
 
 ```
-59 bool spkr_on = false;
+63 bool spkr_on = false;
 ```
 
 M5Dial reset:
