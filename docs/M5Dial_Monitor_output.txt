@@ -1,0 +1,47 @@
+2024-10-07 17h51 utc+1
+
+Platform: M5Stack M5Dial
+
+IDE: Arduino IDE v2.3.3
+
+Sketch: M5Dial_Timezones_and_M5Echo.ino
+
+Note: 
+Added code to send "beep command" to a M5Stack Atom Echo device, using GROVE PORT-B of the M5Dial.
+
+Monitor output:
+
+
+17:51:11.043 -> Button pressed
+17:51:11.043 -> Going to do a software reset...
+17:51:14.119 -> ESP-ROM:esp32s3-20210327
+17:51:14.119 -> Build:Mar 27 2021
+17:51:14.119 -> rst:0xc (RTC_SW_CPU_RST),boot:0x8 (SPI_FAST_FLASH_BOOT)
+17:51:14.119 -> Saved PC:0x420b3fe2
+17:51:14.119 -> SPIWP:0xee
+17:51:14.119 -> mode:DIO, clock div:1
+17:51:14.119 -> load:0x3fce3808,len:0x44c
+17:51:14.119 -> load:0x403c9700,len:0xbd8
+17:51:14.119 -> load:0x403cc700,len:0x2a80
+17:51:14.119 -> entry 0x403c98d0
+17:51:14.509 -> 
+17:51:14.555 -> 
+17:51:14.555 -> M5Stack M5Dial Timezones test.
+17:51:18.600 -> 
+17:51:14.555 -> 
+17:51:14.555 -> M5Stack M5Dial Timezones test.
+17:51:18.600 -> 
+17:51:18.600 -> WiFi Connected
+17:51:18.600 -> sntp_initialize(): sntp polling interval: 15 Minute(s)
+17:51:18.600 -> setup(): sntp_sync_status = RESET
+17:51:23.055 -> time_sync_notification_cb(): time synchronized at time (UTC): Mon Oct  7 16:51:28 2024
+17:51:23.055 -> mtp_sync_notification_txt(): Sending cmd to beep to Atom Echo
+17:52:57.633 -> 
+17:52:57.633 -> WiFi Connected
+17:52:57.667 -> sntp_initialize(): sntp polling interval: 15 Minute(s)
+17:52:57.667 -> setup(): sntp_sync_status = RESET
+17:52:59.005 -> time_sync_notification_cb(): time synchronized at time (UTC): Mon Oct  7 16:53:04 2024
+17:52:59.545 -> mtp_sync_notification_txt(): Sending cmd to beep to Atom Echo
+17:53:09.769 -> 
+
+[...]
