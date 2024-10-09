@@ -103,6 +103,9 @@ which last two files define the ```class ATOMECHOSPKR```, used by the sketch.
 The sketch has functionality to make the M5Atom Echo device to "listen" on Pin1 of the GROVE PORT for a digital impulse (read: beep command)
 sent by the M5Dial at moment of a NTP Time Synchronization.
 
+Update: 2024-10-09: added functionality to switch sound ON/off by double press of the button. If sound is off, the RGB Led will show BLUE color.
+If sound is ON (default), the RGB Led will show RED color.
+
 
 Docs:
 
