@@ -1,0 +1,54 @@
+2024-10-09 23h54 utc+1
+
+Platform: M5Stack M5AtomEcho
+
+IDE: Arduino IDE v2.3.3
+
+Sketch: M5Atom_EchoSPKR_beep_on_command_M5Dial.ino
+(with: AtomEchoSPKR.h and AtomEchoSPKR.cpp (moderately modified for use with the Atom Echo instead of the Atom SPK. Also changed the class name to ATOMECHOSPKR)
+
+Note: added functionality to switch sound ON/off.
+
+Note: the beep sounds, when presed the button on top of the Atom Echo or when received a "beep command" from the M5Dial, sounded excellent!
+      Button response is immediate.
+	  
+	  Added code to control the builtin RGB led. In setup() the Led will be set to show RED color.
+	  When M5.Btn.wasPressed() the Led will be set to show GREEN color. At the end of the beeps the Led will be set back to RED color.
+	  
+	  Added code to "listen" via the GROVE PORT for an impulse from the M5Dial as an indication (read: command) to beep the speaker
+
+
+Note: sound is ON by default
+
+23:43:01.519 -> clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+23:43:01.519 -> mode:DIO, clock div:1
+23:43:01.519 -> load:0x3fff0030,len:1344
+23:43:01.519 -> load:0x40078000,len:13964
+23:43:01.519 -> load:0x40080400,len:3600
+23:43:01.519 -> entry 0x400805f0
+23:43:01.744 -> M5Atom initializing...OK
+23:43:01.744 -> M5Stack M5Atom Echo new "ATOMECHOSPKR class" beep test
+23:43:01.744 -> setup(): builtin RGB Led set to: RED color
+23:43:01.744 -> ATOMECHOSPKR::begin(): rate = 88200
+23:43:01.744 -> E (90) I2S: i2s_driver_uninstall(2048): I2S port 0 has not installed
+23:43:01.744 -> ATOMECHOSPKR::begin(): i2s_driver_installing
+23:43:01.744 -> ATOMECHOSPKR::begin(): i2s_set_pin
+23:43:01.744 -> ATOMECHOSPKR::begin(): i2s_set_clkATOMECHOSPKR::setVolume(): setting volume to: 8
+23:43:08.979 -> loop(): Button was pressed  <<<=== button pressed for the 1st time
+23:43:08.979 -> loop(): builtin RGB Led set to: GREEN color
+23:43:09.106 -> ATOMECHOSPKR::ECHOspeakerPlayTask(): I2S Write
+23:43:09.216 -> ATOMECHOSPKR::ECHOspeakerPlayTask(): I2S Write
+23:43:09.343 -> ATOMECHOSPKR::ECHOspeakerPlayTask(): I2S Write
+23:43:09.384 -> loop(): builtin RGB Led set to: RED color
+23:43:09.524 -> ATOMECHOSPKR::ECHOspeakerPlayTask(): I2S Write
+23:43:10.552 -> loop(): Button was pressed  <<<=== button pressed for a 2nd time.
+23:43:10.552 -> Sound switched OFF. loop(): builtin RGB Led set to: BLUE color  <<<=== After Button pressed twice, sound switched OFF
+23:43:14.143 -> loop(): Button was pressed <<<=== button pressed for 1st time
+23:43:14.752 -> loop(): Button was pressed <<<=== button pressed for a 2nd time.
+23:43:14.752 -> Sound switched ON. loop(): builtin RGB Led set to: RED color <<<=== After again Button pressed twice, sound switched ON.
+23:43:14.788 -> loop(): builtin RGB Led set to: GREEN color
+23:43:14.926 -> ATOMECHOSPKR::ECHOspeakerPlayTask(): I2S Write
+23:43:15.066 -> ATOMECHOSPKR::ECHOspeakerPlayTask(): I2S Write
+23:43:15.151 -> ATOMECHOSPKR::ECHOspeakerPlayTask(): I2S Write
+23:43:15.151 -> loop(): builtin RGB Led set to: RED color
+23:43:15.279 -> ATOMECHOSPKR::ECHOspeakerPlayTask(): I2S Write

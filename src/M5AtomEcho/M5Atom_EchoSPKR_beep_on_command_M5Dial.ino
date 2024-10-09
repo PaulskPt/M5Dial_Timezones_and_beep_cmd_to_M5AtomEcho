@@ -17,6 +17,9 @@
 * New describe: Speaker beep example using ATOMECHOSPKR class
 *               To play beeps on command from a M5Dial device
 *               using the GROVE Port in- and output pins
+*
+* Update 2024-10-09: added functionality to switch sound ON/off by pressing the button twice.
+*                    When sound is switched off, the builtin Led will switched to BLUE color.
 *******************************************************************************
 */
 #include <M5Atom.h>
@@ -113,6 +116,10 @@ void loop()
   //int signal2 = -1;
   int try_cnt = 0;
   int max_try_cnt = 10;
+  int sound_btn_press_cnt = 2;
+  int btn_press_cnt = 0;
+  bool sound_on = true;
+
   while (true)
   {
     //while (cmd_signal_rx == -1)
@@ -145,19 +152,39 @@ void loop()
         Serial.printf("%sBeep command received from M5Dial\n", TAG);
       }
       else if ( M5.Btn.wasPressed())
-        Serial.printf("%sButton was pressed\n", TAG);
-      
-      LedColor(GREEN);
-      Serial.printf("%s%sGREEN%s\n", TAG, txt1, txt2);
-      for (int i = 0; i < 2; i++)  // play a double tone
       {
-        echoSPKR.playBeep(tone1);
-        delay(100);
-        echoSPKR.playBeep(tone2);
-        delay(100);
+        Serial.printf("%sButton was pressed\n", TAG);
+        btn_press_cnt++;
+        if (btn_press_cnt >= sound_btn_press_cnt)
+        {
+          btn_press_cnt = 0; // reset cnt
+          sound_on = (sound_on == true) ? false : true; // flip flag
+          if (sound_on)
+          {
+            LedColor(RED);
+            Serial.printf("Sound switched ON. %s%sRED%s\n", TAG, txt1, txt2);
+          }
+          else
+          {
+            LedColor(BLUE);
+            Serial.printf("Sound switched OFF. %s%sBLUE%s\n", TAG, txt1, txt2);
+          }
+        }
+        if (sound_on)
+        {
+          LedColor(GREEN);
+          Serial.printf("%s%sGREEN%s\n", TAG, txt1, txt2);
+          for (int i = 0; i < 2; i++)  // play a double tone
+          {
+            echoSPKR.playBeep(tone1);
+            delay(100);
+            echoSPKR.playBeep(tone2);
+            delay(100);
+          }
+          LedColor(RED);
+          Serial.printf("%s%sRED%s\n", TAG, txt1, txt2);
+        }
       }
-      LedColor(RED);
-      Serial.printf("%s%sRED%s\n", TAG, txt1, txt2);
     }
     M5.update();  // Read the press state of the key.
   }
