@@ -122,7 +122,7 @@ void loop()
   unsigned long limit_t = 10 * 1000L;
   unsigned long first_btn_press_t = 0;
   unsigned long second_btn_press_t = 0;
-  char times_lst[6][7] = {"dummy", "first", "second", "third", "fourth", "fifth"};
+  char times_lst[3][7] = {"dummy", "first", "second"};
 
   while (true)
   {
