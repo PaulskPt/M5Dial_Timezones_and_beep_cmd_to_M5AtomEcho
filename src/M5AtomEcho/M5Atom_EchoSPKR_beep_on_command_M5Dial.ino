@@ -119,6 +119,10 @@ void loop()
   int sound_btn_press_cnt = 2;
   int btn_press_cnt = 0;
   bool sound_on = true;
+  unsigned long limit_t = 10 * 1000L;
+  unsigned long first_btn_press_t = 0;
+  unsigned long second_btn_press_t = 0;
+  char times_lst[6][7] = {"dummy", "first", "second", "third", "fourth", "fifth"};
 
   while (true)
   {
@@ -153,23 +157,44 @@ void loop()
       }
       else if ( M5.Btn.wasPressed())
       {
-        Serial.printf("%sButton was pressed\n", TAG);
         btn_press_cnt++;
-        if (btn_press_cnt >= sound_btn_press_cnt)
+        if (btn_press_cnt == 1)
+          first_btn_press_t = millis();
+        else if (btn_press_cnt == 2)
+          second_btn_press_t = millis();
+        else if (btn_press_cnt >= 3)
+          btn_press_cnt = 2; // limit to 2
+        
+        Serial.printf("%sButton was pressed for the %s time\n", TAG, times_lst[btn_press_cnt]);
+        if (btn_press_cnt == 2)
         {
-          btn_press_cnt = 0; // reset cnt
-          sound_on = (sound_on == true) ? false : true; // flip flag
-          if (sound_on)
+          if ((first_btn_press_t > 0) && (second_btn_press_t > 0))
           {
-            LedColor(RED);
-            Serial.printf("Sound switched ON. %s%sRED%s\n", TAG, txt1, txt2);
-          }
-          else
-          {
-            LedColor(BLUE);
-            Serial.printf("Sound switched OFF. %s%sBLUE%s\n", TAG, txt1, txt2);
+            Serial.printf("second_btn_press_t - first_btn_press_t =  %lu, limit_t = %lu\n", (second_btn_press_t - first_btn_press_t), limit_t);
+            if ((second_btn_press_t - first_btn_press_t) >= limit_t)
+            {
+              btn_press_cnt = 0;
+            }
+            else
+            {
+              // We have two button presses within the time limit, so we flip the sound
+              sound_on = (sound_on == true) ? false : true; // flip the flag
+            }
+            first_btn_press_t = second_btn_press_t = 0; // reset timers
+
+            if (sound_on)
+            {
+              LedColor(RED);
+              Serial.printf("Sound switched ON. %s%sRED%s\n", TAG, txt1, txt2);
+            }
+            else
+            {
+              LedColor(BLUE);
+              Serial.printf("Sound switched OFF. %s%sBLUE%s\n", TAG, txt1, txt2);
+            }
           }
         }
+
         if (sound_on)
         {
           LedColor(GREEN);
@@ -184,6 +209,9 @@ void loop()
           LedColor(RED);
           Serial.printf("%s%sRED%s\n", TAG, txt1, txt2);
         }
+
+        if (btn_press_cnt >= 2)
+          btn_press_cnt = 0; // reset count
       }
     }
     M5.update();  // Read the press state of the key.
