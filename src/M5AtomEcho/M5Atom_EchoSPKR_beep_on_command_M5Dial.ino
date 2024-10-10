@@ -194,25 +194,24 @@ void loop()
             }
           }
         }
-
-        if (sound_on)
-        {
-          LedColor(GREEN);
-          Serial.printf("%s%sGREEN%s\n", TAG, txt1, txt2);
-          for (int i = 0; i < 2; i++)  // play a double tone
-          {
-            echoSPKR.playBeep(tone1);
-            delay(100);
-            echoSPKR.playBeep(tone2);
-            delay(100);
-          }
-          LedColor(RED);
-          Serial.printf("%s%sRED%s\n", TAG, txt1, txt2);
-        }
-
-        if (btn_press_cnt >= 2)
-          btn_press_cnt = 0; // reset count
       }
+      if (sound_on)
+      {
+        LedColor(GREEN);
+        Serial.printf("%s%sGREEN%s\n", TAG, txt1, txt2);
+        for (int i = 0; i < 2; i++)  // play a double tone
+        {
+          echoSPKR.playBeep(tone1);
+          delay(100);
+          echoSPKR.playBeep(tone2);
+          delay(100);
+        }
+        LedColor(RED);
+        Serial.printf("%s%sRED%s\n", TAG, txt1, txt2);
+      }
+
+      if (btn_press_cnt >= 2)
+        btn_press_cnt = 0; // reset count
     }
     M5.update();  // Read the press state of the key.
   }
