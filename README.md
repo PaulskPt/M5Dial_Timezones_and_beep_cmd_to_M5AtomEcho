@@ -35,13 +35,16 @@ Each time zone sequence of four displays is repeated for 25 seconds. This repeat
 920 unsigned long zone_chg_interval_t = 25000L; // 25 seconds
 ```
 
+M5Dial Display:
+2024-10-11 Added functionality to switch the Display off and On by Display touches. This new function is "work-in-progress". The response of the sketch to a Display touch to set the Display asleep is not as sensitive as is to the opposite: touch to awake the display.
+
 M5Dial sound:
 
 The M5Dial has a built-in speaker, however my experience is that the sound is very weak, even with the volume set maximum (10).
 I also experienced that the audibility of the speaker sound depends on the frequency of the tone played. Another thing I noticed is that when using the speaker, the NTP Time Synchronization moment is delayed each time by 2 seconds. When the speaker is not used, there is no delay in the NTP Time Synchronization moment.
 For this reason I decided not to use the M5Dial speaker. As an alternative I added a text in the toprow (see below under ```M5Dial Reset:```),
 and in this repo, I added functionality to "use" the ability of the M5Atom Echo device to produce nice sounds, also louder than the speaker of the M5Dial device can produce.
-The function spkr() is called at the moment of NTP Time Synchronization. To control the sound I added a global variable:
+The function ```send_cmd_to_AtomEcho()``` is called at the moment of NTP Time Synchronization, however only when the display is awake. When the display is asleep (because the user touched the display to put it asleep, for example to have the display off during night time, no beep commands will be send to the Atom Echo device (because during the night or other moments of silence), we don't want sound! To control the sound of the M5Dial itself, I added the global variable spkr_on. Default: false (because we use the external M5Atom Echo device):
 
 ```
 63 bool spkr_on = false;
