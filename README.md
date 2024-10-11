@@ -135,7 +135,7 @@ Links to product pages of the hardware used:
 - M5Stack M5Atom Echo [info](https://docs.m5stack.com/en/atom/atomecho);
 - M5Stack GROVE Cable [info](https://docs.m5stack.com/en/accessory/cable/grove_cable)
 
-If you want a 3D Print design of a stand for for the M5Dial, see the post of Cyril Ed on the Printables website:
+If you want a 3D Print design of a stand for the M5Dial, see the post of Cyril Ed on the Printables website:
 - [Stand for M5Dial](https://www.printables.com/model/614079-m5stactk-dial-stand).
   I successfully downloaded the files and sent them to a local electronics shop that has a 3D printing service.
   See the images.
