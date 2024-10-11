@@ -32,7 +32,7 @@ For each of the six timezones, in four steps, the following data will be display
 Each time zone sequence of four displays is repeated for 25 seconds. This repeat time is defined in function ```loop()```:
 
 ```
-920 unsigned long zone_chg_interval_t = 25000L; // 25 seconds
+1045 unsigned long const zone_chg_interval_t = 25 * 1000L; // 25 seconds
 ```
 
 M5Dial Display:
@@ -48,7 +48,7 @@ and in this repo, I added functionality to "use" the ability of the M5Atom Echo 
 The function ```send_cmd_to_AtomEcho()``` is called at the moment of NTP Time Synchronization, however only when the display is awake. When the display is asleep (off), because the user touched the display to put it asleep, for example to have the display asleep during night time, no beep commands will be send to the Atom Echo device. We don't want sounds during the night or other moments of silence. To control the sound of the M5Dial itself, there is the global variable spkr_on. Default state of this flag: false, because we use the external M5Atom Echo device:
 
 ```
-63 bool spkr_on = false;
+79 bool spkr_on = false;
 ```
 
 M5Dial reset:
@@ -60,7 +60,7 @@ The sketch will connect to a NTP server of your choice. In this version the sket
 The following define sets the NTP polling interval time:
 
 ```
-51 #define CONFIG_LWIP_SNTP_UPDATE_DELAY  15 * 60 * 1000 // = 15 minutes
+53 #define CONFIG_LWIP_SNTP_UPDATE_DELAY  15 * 60 * 1000 // = 15 minutes
 ```
 
 At the moment of a NTP Time Synchronization, the text "TS" will be shown in the middle of the toprow of the display.
