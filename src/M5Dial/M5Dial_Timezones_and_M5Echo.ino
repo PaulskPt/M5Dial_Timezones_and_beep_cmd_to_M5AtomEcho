@@ -13,13 +13,15 @@
 */
 
 #include <M5Dial.h>
+#include <M5Unified.h>
+#include <M5GFX.h>
+
 #include <esp_sntp.h>
 #include <WiFi.h>
 #include <TimeLib.h>
 #include <stdlib.h>   // for putenv
 #include <time.h>
 #include <DateTime.h> // See: /Arduino/libraries/ESPDateTime/src
-#include <M5GFX.h>
 //#include <Free_Fonts.h>
 #include <driver/adc.h>
 //#include <FastLED.h>
@@ -54,12 +56,26 @@
 #define PORT_B_GROVE_OUT_PIN 2
 #define PORT_B_GROVE_IN_PIN  1
 
+#define MY_WHITE 3
+#define MY_BLACK 5
+
 std::string elem_zone;
 std::string elem_zone_code;
 std::string elem_zone_code_old;
 bool zone_has_changed = false;
 
 bool my_debug = false;
+bool i_am_asleep = false;
+unsigned int touch_cnt = 0;
+unsigned long touch_start_t = 0L;
+
+unsigned long lastDebounceTime = 0;
+unsigned long debounceDelay = 50; // 50 milliseconds debounce delay
+bool lastTouchState = false;
+bool touchState = false;
+
+bool display_on = true;
+bool screen_inversed_colors = true;
 bool spkr_on = false;
 struct tm timeinfo = {};
 bool use_timeinfo = true;
@@ -94,6 +110,11 @@ const int zone_max_idx = 6;
 // and string.substring() functions make work much easier!
 
 //} // end of namespace
+
+/* For button presses: 
+*  See:      https://github.com/m5stack/M5Unified/blob/master/src/utility/Button_Class.hpp 
+*  See also: https://community.m5stack.com/topic/1731/detect-longpress-button-but-not-only-when-released-button
+*/
 
 void spkr(void)
 {
@@ -189,16 +210,34 @@ void ntp_sync_notification_txt(bool show)
   if (show)
   {
     std::shared_ptr<std::string> TAG = std::make_shared<std::string>("mtp_sync_notification_txt(): ");
+    const char txt[] = "beep command to the M5 Atom Echo device";
     M5Dial.Display.setCursor(dw/2-25, 20);
     M5Dial.Display.setTextColor(GREEN, BLACK);
     M5Dial.Display.print("TS");
     delay(500);
-    std::cout << *TAG << "Sending cmd to beep to Atom Echo" << std::endl;
-    send_cmd_to_AtomEcho(); // Send a digital signal to the Atom Echo to produce a beep
+    M5Dial.Display.setCursor(dw/2-25, 20);      // Try to overwrite in black instead of wiping the whole top area
+    M5Dial.Display.setTextColor(BLACK, BLACK);
+    M5Dial.Display.print("TS");
+    M5Dial.Display.setTextColor(YELLOW, BLACK);
+
+    
+    /* Only send command to make sound by the M5 Atom Echo when the display is on,
+       because when the user has put the display off, he/she probably wants to go to bed/sleep.
+       In that case we don't want nightly sounds!
+    */
+
+    if (display_on)
+    {
+      std::cout << *TAG << "Sending " << (txt) << std::endl;
+      send_cmd_to_AtomEcho(); // Send a digital signal to the Atom Echo to produce a beep
+    }
+    else
+      std::cout << *TAG << "Display is Off. Not sending " << (txt) << std::endl;
   }
   else
   {
-    M5Dial.Display.fillRect(dw/2-25, 15, 50, 25, BLACK);
+    //M5Dial.Display.fillRect(dw/2-25, 15, 50, 25, BLACK);
+    M5Dial.Display.fillRect(0, 0, dw-1, 55, BLACK);
   }
 }
 /*
@@ -219,7 +258,8 @@ bool poll_NTP(void)
   else
   {
     std::cout << *TAG << "Failed to obtain time " << std::endl;
-    clr_scrn_partly();
+    //clr_scrn_partly();
+    M5.Display.clear(BLACK);
     M5Dial.Display.setCursor(hori[1], vert[2]);
     M5Dial.Display.print(F("Failed to obtain time"));
     //display.waitDisplay();
@@ -486,6 +526,8 @@ void disp_data(void)
   index = copiedString.find('/');
   index3 = copiedString.find('_'); // e.g. in "New_York" or "Sao_Paulo"
 
+  if (ck_touch())
+    return;
   if (ck_Btn())
     return;
 
@@ -517,10 +559,13 @@ void disp_data(void)
     return;
   }
   // =========== 1st view =================
-  if (ck_Btn())
+if (ck_touch())
+    return;
+ if (ck_Btn())
     return;
 
-  clr_scrn_partly();
+  //clr_scrn_partly();
+  M5.Display.clear(BLACK);
   M5Dial.Display.setTextColor(YELLOW, BLACK);
   if (index >= 0 && index2 >= 0)
   {
@@ -543,27 +588,31 @@ void disp_data(void)
     M5Dial.Display.setCursor(hori[1], vert[1]+5);
     M5Dial.Display.print(copiedString.c_str());
   }
+  if (ck_touch()) return;
   delay(disp_data_delay);
   if (TimeToChangeZone)
     return;
   // =========== 2nd view =================
-  if (ck_Btn())
+ if (ck_Btn())
     return;
 
-  clr_scrn_partly();
+  //clr_scrn_partly();
+  M5.Display.clear(BLACK);
   M5Dial.Display.setTextColor(YELLOW, BLACK);
   M5Dial.Display.setCursor(hori[1], vert[1]+5);
   M5Dial.Display.print("Zone");
   M5Dial.Display.setCursor(hori[1], vert[2]);
   M5Dial.Display.print(&my_timeinfo, "%Z %z");
+  if (ck_touch()) return;
   delay(disp_data_delay);
   if (TimeToChangeZone)
     return;
   // =========== 3rd view =================
-  if (ck_Btn())
+ if (ck_Btn())
     return;
 
-  clr_scrn_partly();
+  //clr_scrn_partly();
+  M5.Display.clear(BLACK);
   M5Dial.Display.setTextColor(YELLOW, BLACK);
   M5Dial.Display.setCursor(hori[1], vert[1]+5);
   M5Dial.Display.print(&my_timeinfo, "%A");  // Day of the week
@@ -571,14 +620,16 @@ void disp_data(void)
   M5Dial.Display.print(&my_timeinfo, "%B %d");
   M5Dial.Display.setCursor(hori[1], vert[3]-10);
   M5Dial.Display.print(&my_timeinfo, "%Y");
+  if (ck_touch()) return;
   delay(disp_data_delay);
   if (TimeToChangeZone)
     return;
    // =========== 4th view =================
-  if (ck_Btn())
+   if (ck_Btn())
     return;
 
-  clr_scrn_partly();
+  //clr_scrn_partly();
+  M5.Display.clear(BLACK);
   M5Dial.Display.setTextColor(YELLOW, BLACK);
   M5Dial.Display.setCursor(hori[1], vert[1]+5);
   M5Dial.Display.print(&my_timeinfo, "%H:%M:%S");
@@ -593,39 +644,42 @@ void disp_data(void)
   }
   else
     M5Dial.Display.printf("in %s\n", part2.c_str());
-  
+  if (ck_touch()) return;
   delay(disp_data_delay);
-  if (TimeToChangeZone)
-    return;
 }
 
-void chg_display_clr(void)
+void chg_display_clr(int color)
 {
-  switch (FSM) 
+  if (color >= 0 && color <= 6)
+    M5Dial.Display.fillScreen(color);  // a kindof override 
+  else
   {
-    case 0:
-        M5Dial.Display.fillScreen(GREEN); // Change GREEN to any color you want
-        break;
-    case 1:
-        M5Dial.Display.fillScreen(RED);
-        break;
-    case 2:
-        M5Dial.Display.fillScreen(BLUE);
-        break;
-    case 3:
-        M5Dial.Display.fillScreen(WHITE);
-        break;
-    case 4:
-        M5Dial.Display.fillScreen(MAGENTA);
-        break;
-    case 5:
-        M5Dial.Display.fillScreen(ORANGE);
-        break;
-    case 6:
-        M5Dial.Display.fillScreen(BLACK);
-        break;
-    default:
-        break;
+    switch (FSM) 
+    {
+      case 0:
+          M5Dial.Display.fillScreen(GREEN); // Change GREEN to any color you want
+          break;
+      case 1:
+          M5Dial.Display.fillScreen(RED);
+          break;
+      case 2:
+          M5Dial.Display.fillScreen(BLUE);
+          break;
+      case 3:
+          M5Dial.Display.fillScreen(WHITE);
+          break;
+      case 4:
+          M5Dial.Display.fillScreen(MAGENTA);
+          break;
+      case 5:
+          M5Dial.Display.fillScreen(ORANGE);
+          break;
+      case 6:
+          M5Dial.Display.fillScreen(BLACK);
+          break;
+      default:
+          break;
+    }
   }
 }
 
@@ -725,6 +779,60 @@ bool ck_Btn()
   return false;
 }
 
+bool ck_touch(void)
+{
+  // std::shared_ptr<std::string> TAG = std::make_shared<std::string>("ck_touch(): ");
+  bool ret = false;
+
+
+  /* MS CoPilot: 
+     In the context of the M5Stack touch screen, 
+     the state “flick” refers to a quick, 
+     swiping motion detected on the touch screen. 
+     This is typically recognized when the touch point 
+     moves a certain distance within a short period, 
+     meeting the predefined flick threshold
+  
+  static constexpr const char* state_name[16] = {
+    "none", "touch", "touch_end", "touch_begin",
+    "___",  "hold",  "hold_end",  "hold_begin",
+    "___",  "flick", "flick_end", "flick_begin",
+    "___",  "drag",  "drag_end",  "drag_begin"};
+  */
+
+  M5Dial.update();
+
+  auto t = M5Dial.Touch.getDetail();
+
+  bool currentTouchState = t.state; // M5.Touch.ispressed();
+
+  if (currentTouchState != lastTouchState)
+  {
+      lastDebounceTime = millis();
+  }
+
+  if ((millis() - lastDebounceTime) > debounceDelay)
+  {
+    if (currentTouchState != touchState)
+    {
+      touchState = currentTouchState;
+
+      if (touchState)
+      {
+        ret = true;
+        touch_cnt++;  // increase global var
+        // The maximum value of an unsigned int is 4294967295
+        if (touch_cnt >= (4294967295 - 1))
+          touch_cnt = 4294967295 - 1; // keep it below the maximum. Prevent an overflow
+        if (touch_start_t == 0)
+          touch_start_t = millis();
+      }
+    }
+  }
+  lastTouchState = currentTouchState;
+  return ret;
+}
+
 /* According to MS CoPilot:
    The width of a character in the FreeSans12pt7b font on the M5Stack 
    can vary slightly depending on the specific character. 
@@ -771,7 +879,8 @@ void start_scrn(void) {
   int vert2[] = {0, 60, 90, 120, 150}; 
   int x = 0;
 
-  clr_scrn_partly();
+  //clr_scrn_partly();
+  M5.Display.clear(BLACK);
   M5Dial.Display.setTextColor(RED, BLACK);
   //M5Dial.Display.setFont(&fonts::FreeSans18pt7b);
 
@@ -805,8 +914,11 @@ void setup(void)
 {
   M5.begin();  
   auto cfg = M5.config();
+  cfg.serial_baudrate = 115200;
 
   M5Dial.begin(cfg, true, false);
+
+  M5Dial.Power.begin();
 
   /*
   * A workaround to prevent some problems regarding 
@@ -822,14 +934,24 @@ void setup(void)
   // commands to start a beep.
   pinMode(PORT_B_GROVE_OUT_PIN, OUTPUT); // Set PORT_B_GROVE_OUT_PIN as an output
   digitalWrite(PORT_B_GROVE_OUT_PIN, LOW); // Turn Idle the output pin
-  pinMode(PORT_B_GROVE_IN_PIN, INPUT); // Set PORT_B_GROVE_IN_PIN as an input
+  pinMode(PORT_B_GROVE_IN_PIN, INPUT); // Set PORT_B_GROVE_IN_PIN as an inputf
   digitalWrite(PORT_B_GROVE_IN_PIN, LOW); // Turn Idle the output pin
 
   M5Dial.Display.init();
+  M5Dial.Display.setBrightness(250);  // 0-255
    dw = M5Dial.Display.width();
    dh = M5Dial.Display.height();
   M5Dial.Display.setRotation(0);
-  M5Dial.Display.setTextColor(YELLOW, BLACK);
+  if (screen_inversed_colors)
+  {
+    chg_display_clr(MY_WHITE); // white background
+    M5Dial.Display.setTextColor(BLACK, WHITE);
+  }
+  else
+  {
+    chg_display_clr(MY_BLACK); // white background
+    M5Dial.Display.setTextColor(YELLOW, BLACK);
+  }
 
   M5Dial.Display.setColorDepth(1); // mono color
   M5Dial.Display.setFont(&fonts::FreeSans12pt7b); // was: efontCN_14);
@@ -905,28 +1027,75 @@ void setup(void)
       if (set_RTC())
       {
         poll_RTC();  // Update RTCtimeinfo
-        disp_data();
+        if (display_on)
+          disp_data();
       }
     }
   }
   else
     connect_try++;
 
-  clr_scrn_partly();
+  //clr_scrn_partly();
+  M5.Display.clear(BLACK);
 }
 
 void loop(void)
 {
-  unsigned long zone_chg_interval_t = 25000L; // 25 seconds
+  std::shared_ptr<std::string> TAG = std::make_shared<std::string>("loop(): ");
+  unsigned long const zone_chg_interval_t = 25 * 1000L; // 25 seconds
   unsigned long zone_chg_curr_t = 0L;
   unsigned long zone_chg_elapsed_t = 0L;
-
+  
+  int btn_press_cnt = 0;
+  char times_lst[3][7] = {"dummy", "first", "second"};
   bool dummy = false;
   bool zone_change = false;
   bool lStart = true;
+  bool msgAsleep_shown = false;
+  bool msgWakeup_shown = false;
+  const char disp_off_txt[] = "Switching display off. Just press the button to switch display on again.";
 
   while (true)
   {
+    dummy = ck_touch();
+  
+    if (touch_cnt > 0)
+    {
+      std::cout << std::endl << *TAG << "touch_cnt = " << std::to_string(touch_cnt) << std::endl;
+ 
+      touch_cnt = 0; // reset
+
+      display_on = (display_on == true) ? false : true; // flip the display_on flag
+      std::cout << *TAG << "Display touched. Switching display " << (display_on ? "On" : "Off") << std::endl;
+      if (display_on)
+      {
+        if (i_am_asleep)
+        {
+          // See: https://github.com/m5stack/m5-docs/blob/master/docs/en/api/lcd.md
+          std::cout << *TAG << "Waking up!"  << std::endl;
+          M5.Display.wakeup();
+          i_am_asleep = false;
+    
+          M5.Display.setBrightness(250);  // 0 - 255
+          M5Dial.Display.setTextColor(YELLOW, BLACK);
+          M5.Display.clear(BLACK);
+        }
+      }
+      else
+      {
+        if (!i_am_asleep)
+        {
+          // See: https://github.com/m5stack/m5-docs/blob/master/docs/en/api/lcd.md
+          //M5Dial.Power.powerOff(); // shutdown
+          std::cout << *TAG << "Going asleep!"  << std::endl;
+          M5.Display.sleep();
+          i_am_asleep = true;
+          M5.Display.setBrightness(0);
+          chg_display_clr(MY_BLACK); // Switch background to black
+        }
+      }
+    }
+
     if (!ck_Btn())
     {
       if (WiFi.status() != WL_CONNECTED) // Check if we're still connected to WiFi
@@ -938,7 +1107,8 @@ void loop(void)
 
         if (connect_try >= max_connect_try)
         {
-          clr_scrn_partly();
+          //clr_scrn_partly();
+          M5.Display.clear(BLACK);
           M5Dial.Display.setCursor(hori[1], vert[1]+5);
           M5Dial.Display.print("WiFi fail!");
           M5Dial.Display.setCursor(hori[1], vert[2]-2);
@@ -970,7 +1140,7 @@ void loop(void)
         FSM++;
         if (FSM >= 6)
           FSM = 0;
-        // chg_display_clr();
+        // chg_display_clr(-1);
         /*
         Increase the zone_index, so that the sketch
         will display data from a next timezone in the map: time_zones.
@@ -982,7 +1152,8 @@ void loop(void)
         TimeToChangeZone = false;
         poll_RTC();
         printLocalTime();
-        disp_data();
+        if (display_on)
+          disp_data();
 
         // Poll NTP and set RTC to synchronize it
         Done = 0; // Reset this count also
@@ -990,23 +1161,29 @@ void loop(void)
     }
     if (buttonPressed)
     {
-      buttonPressed = false;
-      std::cout << "\nButton pressed" << std::endl;
-      std::cout << "Going to do a software reset..." << std::endl;
+      // We have a button press so do a software reset
+      std::cout << *TAG << "Button was pressed.\n" << 
+        "Going to do a software reset...\n" << std::endl;
       M5Dial.Display.clearDisplay();
       M5Dial.Display.setCursor(hori[1]-20, vert[2]-5);
       M5Dial.Display.print("Going to reset...");
       delay(3000);
       esp_restart();
     }
-    // printLocalTime();
-    disp_data();
-    //delay(1000);  // Wait 1 second
+    if (display_on)
+    {
+      // printLocalTime();
+      disp_data();
+      //delay(1000);  // Wait 1 second
+    }
+    M5Dial.update(); // read btn state etc.
   }
   
-  clr_scrn_partly();
+  //clr_scrn_partly();
+  M5.Display.clear(BLACK);
   M5Dial.Display.setCursor(hori[1], vert[2]-2);
   M5Dial.Display.print("Bye...");
+  std::cout << *TAG << "Bye...\n" << std::endl;
   M5Dial.update();
   /* Go into an endless loop after WiFi doesn't work */
   do
