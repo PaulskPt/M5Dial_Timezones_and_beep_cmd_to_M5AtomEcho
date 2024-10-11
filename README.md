@@ -20,7 +20,14 @@ The software consists of two parts: a) for the M5Dial; b) for the M5Atom Echo.
 
 The M5Dial part:
 
-After applying power to the M5Dial device, the sketch ```M5Dial_Timezones_and_M5Echo.ino```, sequentially will display data of six pre-programmed timezones.
+Since 2024-10-11 there are two versions of the M5Dial part: 
+1. an initial version that used display touch to put the display asleep or awake;
+2. an updated version with RFID TAG recognition. Now you can put the display asleep or awake with your RFID TAG.
+   The ID number of the RFID TAG has to be copied into the file ```secret.h```, variable: ```SECRET_MY_RFID_TAG_NR_HEX```,
+   for example: ```2b8e3942``` (letters in lower case). A global variable ```use_rfid``` (default: ```true```), controls if RFID recognition
+   will be active or not (in that case display touch will be the way to put the display asleep or awake).
+
+After applying power to the M5Dial device, the sketch will sequentially display data of six pre-programmed timezones.
 
 
 For each of the six timezones, in four steps, the following data will be displayed:
