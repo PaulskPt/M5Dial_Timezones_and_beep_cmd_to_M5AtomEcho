@@ -36,6 +36,7 @@ Each time zone sequence of four displays is repeated for 25 seconds. This repeat
 ```
 
 M5Dial Display:
+
 2024-10-11 Added functionality to switch the Display off and On by Display touches. This new function is "work-in-progress". The response of the sketch to a Display touch to set the Display asleep is not as sensitive as is to the opposite: touch to awake the display.
 
 M5Dial sound:
