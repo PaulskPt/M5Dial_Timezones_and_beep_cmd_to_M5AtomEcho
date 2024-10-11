@@ -1,0 +1,31 @@
+
+2024-10-11 09h31 utc+1
+
+Board: M5Stack M5Dial with connected to Port B: M5 Atom Echo
+
+Arduino IDE v2.3.3
+
+Sketch: M5Dial_Timezones_and_M5Echo.ino
+
+Note: just finished adding a touch experiment
+Added function ck_touch, called from function loop()
+
+Monitor output (partially):
+
+
+
+09:30:01.531 -> loop(): touch_cnt = 1
+09:30:01.531 -> loop(): Display touched. Switching display Off
+09:30:01.531 -> loop(): Going asleep!
+09:30:01.896 -> 
+09:30:01.896 -> loop(): touch_cnt = 1
+09:30:01.896 -> loop(): Display touched. Switching display On
+09:30:01.896 -> loop(): Waking up!
+09:30:17.188 -> 
+09:30:17.188 -> loop(): touch_cnt = 1
+09:30:17.188 -> loop(): Display touched. Switching display Off
+09:30:17.188 -> loop(): Going asleep!
+09:30:21.811 -> 
+09:30:21.811 -> loop(): touch_cnt = 1
+09:30:21.853 -> loop(): Display touched. Switching display On
+09:30:21.853 -> loop(): Waking up!
