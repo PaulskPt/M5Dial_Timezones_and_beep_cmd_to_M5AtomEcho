@@ -1166,6 +1166,7 @@ void loop(void)
   unsigned long const zone_chg_interval_t = 25 * 1000L; // 25 seconds
   unsigned long zone_chg_curr_t = 0L;
   unsigned long zone_chg_elapsed_t = 0L;
+  time_t t;
   
   int btn_press_cnt = 0;
   char times_lst[3][7] = {"dummy", "first", "second"};
@@ -1199,21 +1200,18 @@ void loop(void)
   
     if (touch_cnt > 0)
     {
-      if (!use_rfid)
-      {
-        std::cout << std::endl << *TAG << "touch_cnt = " << std::to_string(touch_cnt) << std::endl;
-      }
       touch_cnt = 0; // reset
 
       display_on = (display_on == true) ? false : true; // flip the display_on flag
 
       if (use_rfid)
       {
-        std::cout << *TAG << "Switching display " << (display_on ? "On" : "Off") << std::endl;
+        std::cout << *TAG << "Switching display " << ((display_on == true) ? "On" : "Off") << std::endl;
       }
       else
       {
-        std::cout << *TAG << "Display touched. Switching display " << (display_on ? "On" : "Off") << std::endl;
+        std::cout << std::endl << *TAG << "touch_cnt = " << std::to_string(touch_cnt) << std::endl;
+        std::cout << *TAG << "Display touched. Switching display " << ((display_on == true) ? "On" : "Off") << std::endl;
       }
 
       if (display_on)
@@ -1225,7 +1223,8 @@ void loop(void)
           i_am_asleep = false;
           M5.Display.setBrightness(disp_brightness);  // 0 - 255
           disp_msg("Waking up!");
-          std::cout << *TAG << "Waking up!" << std::endl;
+          t = time(NULL);
+          std::cout << *TAG << "Waking up! At (UTC): " << asctime(gmtime(&t)) << std::endl;
           M5Dial.Display.setTextColor(DISP_FG, DISP_BG);
           M5.Display.clear(BLACK);
         }
@@ -1237,7 +1236,8 @@ void loop(void)
           // See: https://github.com/m5stack/m5-docs/blob/master/docs/en/api/lcd.md
           // M5Dial.Power.powerOff(); // shutdown
           disp_msg("Going asleep!");
-          std::cout << *TAG << "Going asleep!" << std::endl;
+          t = time(NULL);
+          std::cout << *TAG << "Going asleep! At (UTC): " << asctime(gmtime(&t)) << std::endl;
           M5.Display.sleep();
           i_am_asleep = true;
           M5.Display.setBrightness(0);
@@ -1250,22 +1250,21 @@ void loop(void)
     {
       if (WiFi.status() != WL_CONNECTED) // Check if we're still connected to WiFi
       {
-        // Serial.print(F("loop(): WiFi connection lost. Trying to reconnect..."));
         std::cout << "loop(): WiFi connection lost. Trying to reconnect..." << std::endl;
         if (!connect_WiFi())  // Try to connect WiFi
           connect_try++;
-
+        
         if (connect_try >= max_connect_try)
         {
-          M5.Display.clear(BLACK);
-          M5Dial.Display.setCursor(hori[1], vert[1]+5);
-          M5Dial.Display.print("WiFi fail!");
-          M5Dial.Display.setCursor(hori[1], vert[2]-2);
-          M5Dial.Display.print("Exit into");
-          M5Dial.Display.setCursor(hori[1], vert[3]-10);
-          M5Dial.Display.print("infinite loop");
-
-          std::cout << "\nWiFi connect try failed " << (connect_try) << "times. Going into infinite loop...\n" << std::endl;
+          M5Dial.Display.fillScreen(TFT_BLACK);
+          M5Dial.Display.clear();
+          M5Dial.Display.setTextDatum(middle_center);
+          M5Dial.Display.setTextColor(TFT_RED);
+          M5Dial.Display.drawString("WiFi fail", M5Dial.Display.width() / 2, M5Dial.Display.height() / 2 - 50);
+          M5Dial.Display.drawString("Exit into", M5Dial.Display.width() / 2, M5Dial.Display.height() / 2);
+          M5Dial.Display.drawString("infinite loop", M5Dial.Display.width() / 2, M5Dial.Display.height() / 2 + 50);
+          std::cout << "\nWiFi connect try failed " << (connect_try) << " times. Going into infinite loop...\n" << std::endl;
+          delay(6000);
           break; // exit and go into an endless loop
         }
       }
