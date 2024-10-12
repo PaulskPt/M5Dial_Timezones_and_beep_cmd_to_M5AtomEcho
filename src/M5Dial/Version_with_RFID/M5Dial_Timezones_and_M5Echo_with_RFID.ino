@@ -66,6 +66,10 @@
 #define MY_WHITE 3
 #define MY_BLACK 5
 
+int DISP_FG = TFT_ORANGE;
+int DISP_BG = TFT_BLACK;
+int disp_brightness = 50;
+
 std::string elem_zone;
 std::string elem_zone_code;
 std::string elem_zone_code_old;
@@ -80,7 +84,6 @@ bool use_rfid = true;
 bool i_am_asleep = false;
 unsigned int touch_cnt = 0;
 unsigned long touch_start_t = 0L;
-int disp_brightness = 125;
 
 unsigned long lastDebounceTime = 0;
 unsigned long debounceDelay = 50; // 50 milliseconds debounce delay
@@ -88,7 +91,6 @@ bool lastTouchState = false;
 bool touchState = false;
 
 bool display_on = true;
-bool screen_inversed_colors = true;
 bool spkr_on = false;
 struct tm timeinfo = {};
 bool use_timeinfo = true;
@@ -231,7 +233,7 @@ void ntp_sync_notification_txt(bool show)
     M5Dial.Display.setCursor(dw/2-25, 20);      // Try to overwrite in black instead of wiping the whole top area
     M5Dial.Display.setTextColor(BLACK, BLACK);
     M5Dial.Display.print("TS");
-    M5Dial.Display.setTextColor(YELLOW, BLACK);
+    M5Dial.Display.setTextColor(DISP_FG, DISP_BG);
 
     
     /* Only send command to make sound by the M5 Atom Echo when the display is on,
@@ -271,7 +273,6 @@ bool poll_NTP(void)
   else
   {
     std::cout << *TAG << "Failed to obtain time " << std::endl;
-    //clr_scrn_partly();
     M5.Display.clear(BLACK);
     M5Dial.Display.setCursor(hori[1], vert[2]);
     M5Dial.Display.print(F("Failed to obtain time"));
@@ -577,9 +578,8 @@ if (ck_touch())
  if (ck_Btn())
     return;
 
-  //clr_scrn_partly();
   M5.Display.clear(BLACK);
-  M5Dial.Display.setTextColor(YELLOW, BLACK);
+  M5Dial.Display.setTextColor(DISP_FG, DISP_BG);
   if (index >= 0 && index2 >= 0)
   {
     M5Dial.Display.setCursor(hori[1], vert[1]+5);
@@ -609,9 +609,8 @@ if (ck_touch())
  if (ck_Btn())
     return;
 
-  //clr_scrn_partly();
   M5.Display.clear(BLACK);
-  M5Dial.Display.setTextColor(YELLOW, BLACK);
+  M5Dial.Display.setTextColor(DISP_FG, DISP_BG);
   M5Dial.Display.setCursor(hori[1], vert[1]+5);
   M5Dial.Display.print("Zone");
   M5Dial.Display.setCursor(hori[1], vert[2]);
@@ -624,9 +623,8 @@ if (ck_touch())
  if (ck_Btn())
     return;
 
-  //clr_scrn_partly();
   M5.Display.clear(BLACK);
-  M5Dial.Display.setTextColor(YELLOW, BLACK);
+  M5Dial.Display.setTextColor(DISP_FG, DISP_BG);
   M5Dial.Display.setCursor(hori[1], vert[1]+5);
   M5Dial.Display.print(&my_timeinfo, "%A");  // Day of the week
   M5Dial.Display.setCursor(hori[1], vert[2]-2);
@@ -641,9 +639,9 @@ if (ck_touch())
    if (ck_Btn())
     return;
 
-  //clr_scrn_partly();
+
   M5.Display.clear(BLACK);
-  M5Dial.Display.setTextColor(YELLOW, BLACK);
+  M5Dial.Display.setTextColor(DISP_FG, DISP_BG);
   M5Dial.Display.setCursor(hori[1], vert[1]+5);
   M5Dial.Display.print(&my_timeinfo, "%H:%M:%S");
   M5Dial.Display.setCursor(hori[1], vert[2]);
@@ -664,16 +662,20 @@ if (ck_touch())
 void disp_msg(String str)
 {
   M5Dial.Display.fillScreen(TFT_BLACK);
+  M5Dial.Display.setBrightness(200);  // Make more brightness than normal
   M5Dial.Display.clear();
   M5Dial.Display.setTextDatum(middle_center);
-  M5Dial.Display.setTextColor(BLUE);
+  M5Dial.Display.setTextColor(TFT_NAVY); // (BLUE);
   M5Dial.Display.drawString(str, M5Dial.Display.width() / 2, M5Dial.Display.height() / 2);
   //M5Dial.Display.drawString(str2, M5Dial.Display.width() / 2, M5Dial.Display.height() / 2);
   delay(6000);
   M5Dial.Display.fillScreen(TFT_BLACK);
+  M5Dial.Display.setBrightness(disp_brightness); // Restore brightness to normal
+
   M5Dial.Display.clear();
 }
 
+/* See: https://github.com/m5stack/m5-docs/blob/master/docs/en/api/lcd.md */
 void chg_display_clr(int color)
 {
   if (color >= 0 && color <= 6)
@@ -683,25 +685,25 @@ void chg_display_clr(int color)
     switch (FSM) 
     {
       case 0:
-          M5Dial.Display.fillScreen(GREEN); // Change GREEN to any color you want
+          M5Dial.Display.fillScreen(TFT_GREEN); // Change GREEN to any color you want
           break;
       case 1:
-          M5Dial.Display.fillScreen(RED);
+          M5Dial.Display.fillScreen(TFT_RED);
           break;
       case 2:
-          M5Dial.Display.fillScreen(BLUE);
+          M5Dial.Display.fillScreen(TFT_NAVY); // (BLUE);
           break;
       case 3:
-          M5Dial.Display.fillScreen(WHITE);
+          M5Dial.Display.fillScreen(TFT_WHITE);
           break;
       case 4:
-          M5Dial.Display.fillScreen(MAGENTA);
+          M5Dial.Display.fillScreen(TFT_MAGENTA);
           break;
       case 5:
-          M5Dial.Display.fillScreen(ORANGE);
+          M5Dial.Display.fillScreen(TFT_ORANGE);
           break;
       case 6:
-          M5Dial.Display.fillScreen(BLACK);
+          M5Dial.Display.fillScreen(TFT_BLACK);
           break;
       default:
           break;
@@ -1020,7 +1022,6 @@ void start_scrn(void) {
   int vert2[] = {0, 60, 90, 120, 150}; 
   int x = 0;
 
-  //clr_scrn_partly();
   M5.Display.clear(BLACK);
   M5Dial.Display.setTextColor(RED, BLACK);
   //M5Dial.Display.setFont(&fonts::FreeSans18pt7b);
@@ -1033,13 +1034,8 @@ void start_scrn(void) {
   }
 
   //delay(5000);
-  M5Dial.Display.setTextColor(YELLOW, BLACK);
+  M5Dial.Display.setTextColor(DISP_FG, DISP_BG);
   //M5Dial.Display.setFont(&fonts::FreeSans12pt7b); // was: efontCN_14);
-}
-
-void clr_scrn_partly(void)
-{
-  M5Dial.Display.fillRect(hori[0],vert[1]-5, dw-1, dh-1, BLACK);  // clear display except the upper row
 }
 
 void send_cmd_to_AtomEcho(void)
@@ -1089,16 +1085,10 @@ void setup(void)
    dw = M5Dial.Display.width();
    dh = M5Dial.Display.height();
   M5Dial.Display.setRotation(0);
-  if (screen_inversed_colors)
-  {
-    chg_display_clr(MY_WHITE); // white background
-    M5Dial.Display.setTextColor(BLACK, WHITE);
-  }
-  else
-  {
-    chg_display_clr(MY_BLACK); // white background
-    M5Dial.Display.setTextColor(YELLOW, BLACK);
-  }
+
+  chg_display_clr(MY_BLACK);
+  M5Dial.Display.setTextColor(DISP_FG, DISP_BG);
+  
 
   M5Dial.Display.setColorDepth(1); // mono color
   M5Dial.Display.setFont(&fonts::FreeSans12pt7b); // was: efontCN_14);
@@ -1178,7 +1168,6 @@ void setup(void)
   else
     connect_try++;
 
-  //clr_scrn_partly();
   M5.Display.clear(BLACK);
 }
 
@@ -1248,7 +1237,7 @@ void loop(void)
           M5.Display.setBrightness(disp_brightness);  // 0 - 255
           disp_msg("Waking up!");
           std::cout << *TAG << "Waking up!" << std::endl;
-          M5Dial.Display.setTextColor(YELLOW, BLACK);
+          M5Dial.Display.setTextColor(DISP_FG, DISP_BG);
           M5.Display.clear(BLACK);
         }
       }
