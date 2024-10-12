@@ -1,0 +1,35 @@
+2024-10-12 00h12 utc+1
+
+Board: M5Stack M5Dial with connected to Port B: M5 Atom Echo
+
+Arduino IDE v2.3.3
+
+Sketch: 2024-10-11_M5Stack_M5Dial_RFID_test.ino
+
+Note: just finished ading RFID TAG recognition,
+used to put the display asleep or awake.
+Added function ck_RFID, called from function loop()
+And added global variable: use_rfid (default: true).
+
+Monitor output (partially):
+
+
+00:12:03.791 -> 
+
+00:12:03.791 -> WiFi Connected
+00:12:03.791 -> sntp_initialize(): sntp polling interval: 15 Minute(s)
+00:12:03.791 -> setup(): sntp_sync_status = RESET
+00:12:08.275 -> time_sync_notification_cb(): time synchronized at time (UTC): Fri Oct 11 23:12:14 2024
+00:12:08.809 -> mtp_sync_notification_txt(): Sending beep command to the M5 Atom Echo device
+00:12:09.369 -> loop(): state of the global flag use_rfid = True
+00:12:21.227 -> ck_RFID(): Hi there, your RFID TAG has been recognized. 
+00:12:21.274 -> loop(): Switching display Off
+00:12:27.321 -> loop(): Going asleep!
+00:12:32.876 -> ck_RFID(): Hi there, your RFID TAG has been recognized. 
+00:12:32.911 -> loop(): Switching display On
+00:12:38.962 -> loop(): Waking up!
+00:27:09.006 -> time_sync_notification_cb(): time synchronized at time (UTC): Fri Oct 11 23:27:14 2024
+00:27:09.510 -> mtp_sync_notification_txt(): Sending beep command to the M5 Atom Echo device
+00:42:09.701 -> time_sync_notification_cb(): time synchronized at time (UTC): Fri Oct 11 23:42:15 2024
+00:42:10.186 -> mtp_sync_notification_txt(): Sending beep command to the M5 Atom Echo device
+
