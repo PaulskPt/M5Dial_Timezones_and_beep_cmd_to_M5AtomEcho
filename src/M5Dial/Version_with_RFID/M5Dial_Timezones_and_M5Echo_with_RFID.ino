@@ -41,6 +41,7 @@
 #include <tuple>
 #include <iomanip> // For setFill and setW
 #include <cstring> // For strcpy
+#include <sstream>  // Used in ck_RFID()
 
 //namespace {  // anonymous namespace (also known as an unnamed namespace)
 
@@ -353,7 +354,7 @@ void setTimezone(void)
     The format of the time string is the same as described in the GNU libc documentation (although the implementation is different).
     Call tzset() to update C library runtime data for the new timezone.
   */
-  // Serial.printf("Setting Timezone to \"%s\"\n",elem_zone_code.c_str());
+  // std::cout << *TAG << "Setting Timezone to \"" << (elem_zone_code.c_str()) << "\"\n" << std::endl;
   setenv("TZ",elem_zone_code.c_str(),1);
   //  Now adjust the TZ.  Clock settings are adjusted to show the new local time
   delay(500);
@@ -860,6 +861,12 @@ bool ck_touch(void)
   return ret;
 }
 
+std::string intToHex(int value) {
+    std::stringstream ss;
+    ss << std::hex << value;
+    return ss.str();
+}
+
 bool ck_RFID(void)
 {
   std::shared_ptr<std::string> TAG = std::make_shared<std::string>("ck_RFID(): ");
@@ -873,14 +880,10 @@ bool ck_RFID(void)
       M5Dial.Rfid.PICC_ReadCardSerial()) 
   {
     M5Dial.Display.clear();
-    if (my_debug)
-    {
-      std::cout << *TAG << "PICC type: " << std::flush;
-    }
     uint8_t piccType = M5Dial.Rfid.PICC_GetType(M5Dial.Rfid.uid.sak);
     if (my_debug)
     {
-      std::cout << (M5Dial.Rfid.PICC_GetTypeName(piccType)) << std::endl;
+      std::cout << *TAG << "PICC type: " << (M5Dial.Rfid.PICC_GetTypeName(piccType)) << std::endl;
     }
     // Check is the PICC of Classic MIFARE type
     if (piccType != MFRC522::PICC_TYPE_MIFARE_MINI &&
@@ -891,49 +894,35 @@ bool ck_RFID(void)
       M5Dial.Display.fillScreen(TFT_BLACK);
       M5Dial.Display.clear();
       M5Dial.Display.setTextDatum(middle_center);
-      M5Dial.Display.setTextColor(RED);
+      M5Dial.Display.setTextColor(TFT_RED);
       M5Dial.Display.drawString("card not", M5Dial.Display.width() / 2, M5Dial.Display.height() / 2 - 50);
       M5Dial.Display.drawString("supported", M5Dial.Display.width() / 2, M5Dial.Display.height() / 2);
       return false;
     }
     
-    String uid = "";
-    std::string sUID = "";
-    
-    if (my_debug)
-    {
-      Serial.print("uid     = 0x");
-    }
+    std::string uid = "";
+    std::string sMyRFID(MY_RFID_TAG_HEX);
+    int le = sMyRFID.length();
+
     for (byte i = 0; i < M5Dial.Rfid.uid.size; i++) // Output the stored UID data.
     {  
-      if (my_debug)
-      {
-        Serial.printf("%02X", M5Dial.Rfid.uid.uidByte[i]);
-      }
-      uid += String(M5Dial.Rfid.uid.uidByte[i], HEX);
+      std::string hexString1 = intToHex(M5Dial.Rfid.uid.uidByte[i]);
+      uid += hexString1;
     }
+
     if (my_debug)
-    {
-      Serial.println();
-    }
+      std::cout << *TAG << "uid     = 0x" << (uid) << std::endl;
 
     /*
     M5Dial.Display.drawString(M5Dial.Rfid.PICC_GetTypeName(piccType), M5Dial.Display.width() / 2, M5Dial.Display.height() / 2 - 30);
-
     M5Dial.Display.drawString("card id:", M5Dial.Display.width() / 2, M5Dial.Display.height() / 2);
-
     M5Dial.Display.drawString(uid, M5Dial.Display.width() / 2, M5Dial.Display.height() / 2 + 30);
     */
 
-    std::string sMyRFID(MY_RFID_TAG_HEX);
     if (my_debug)
     {
-      std::cout << *TAG << "uid = \"" << (sUID.c_str()) << "\"" << std::endl;
-      std::cout << *TAG << "sMyRFID = 0x" << (sMyRFID.c_str()) << std::endl;
-    }
-    int le = sMyRFID.length();
-    if (my_debug)
-    {
+      std::cout << std::endl << *TAG << "uid     = 0x" << (uid.c_str())     << std::endl;
+      std::cout <<              *TAG << "sMyRFID = 0x" << (sMyRFID.c_str()) << std::endl;
       std::cout << *TAG << "length of sMyRFID = " << (le) << std::endl;
     }
     bool lCkEq = true;
