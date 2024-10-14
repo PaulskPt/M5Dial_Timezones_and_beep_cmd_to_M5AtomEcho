@@ -29,7 +29,7 @@
 #include <time.h>
 #include <DateTime.h> // See: /Arduino/libraries/ESPDateTime/src
 //#include <Free_Fonts.h>
-#include <driver/adc.h>
+//#include <driver/adc.h> // Obscelete? Not found in Arduino_esp32
 //#include <FastLED.h>
 #include "secret.h"
 // Following 8 includes needed for creating, changing and using map time_zones
@@ -1053,7 +1053,7 @@ void setup(void)
   * M5Dial.BtnA,wasPressed() or M5Dial.BtnA.pressedFor(ms).
   * See: https://community.m5stack.com/topic/3955/atom-button-at-gpio39-without-pullup/5
   */
-  adc_power_acquire(); // ADC Power ON
+  // adc_power_acquire(); // ADC Power ON
 
   //attachInterrupt(digitalPinToInterrupt(ck_Btn()), handleButtonPress, FALLING);
 
