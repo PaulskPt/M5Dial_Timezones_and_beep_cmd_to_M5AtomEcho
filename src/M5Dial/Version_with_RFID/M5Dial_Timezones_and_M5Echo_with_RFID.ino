@@ -18,6 +18,9 @@
 *
 *  Update: 2024-10-14. To prevent 100% memory usage: deleted a few functions. Deleted a lot of if(my_debug) conditional prints with a lot of text.
 *  Assigned more variables as static procexpr const PROGMEM.
+*
+*  Update: 2025-10-15: Moved all zone definitions to secret.h. Deleted function: void map_replace_first_zone(void).
+*          Changed function create_maps(). This function now imports all zone and zone_code definitions into a map.
 */
 
 #include <M5Dial.h>
@@ -45,8 +48,6 @@
 
 #define WIFI_SSID     SECRET_SSID // "YOUR WIFI SSID NAME"
 #define WIFI_PASSWORD SECRET_PASS //"YOUR WIFI PASSWORD"
-#define NTP_TIMEZONE  SECRET_NTP_TIMEZONE // for example: "Europe/Lisbon"
-#define NTP_TIMEZONE_CODE  SECRET_NTP_TIMEZONE_CODE // for example: "WET0WEST,M3.5.0/1,M10.5.0"
 #define NTP_SERVER1   SECRET_NTP_SERVER_1 // for example: "0.pool.ntp.org"
 #define NTP_SERVER2   "1.pool.ntp.org"
 #define NTP_SERVER3   "2.pool.ntp.org"
@@ -108,50 +109,52 @@ static constexpr const char* wd[7] PROGMEM = {"Sun", "Mon", "Tue", "Wed",
 
 unsigned long zone_chg_start_t = millis();
 bool TimeToChangeZone = false;
-int Done = 0;
 
-uint8_t FSM = 0;  // Store the number of key presses
 int connect_try = 0;
-int max_connect_try = 10;
+const int max_connect_try = 10;
 
 volatile bool buttonPressed = false;
 
-int zone_idx = 0;
-const int PROGMEM zone_max_idx = 6;
+int zone_idx; // Will be incremented in loop()
+static constexpr const int nr_of_zones = SECRET_NTP_NR_OF_ZONES[0] - '0';  // Assuming SECRET_NTP_NR_OF_ZONES is defined as a string
 
 std::map<int, std::tuple<std::string, std::string>> zones_map;
 
 //} // end of namespace
 
-void create_maps(void) 
+void create_maps() 
 {
-  zones_map[0] = std::make_tuple("Asia/Tokyo", "JST-9");
-  zones_map[1] = std::make_tuple("America/Kentucky/Louisville", "EST5EDT,M3.2.0,M11.1.0");
-  zones_map[2] = std::make_tuple("America/New_York", "EST5EDT,M3.2.0,M11.1.0");
-  zones_map[3] = std::make_tuple("America/Sao_Paulo", "<-03>3");
-  zones_map[4] = std::make_tuple("Europe/Amsterdam", "CET-1CEST,M3.5.0,M10.5.0/3");
-  zones_map[5] = std::make_tuple("Australia/Sydney", "AEST-10AEDT,M10.1.0,M4.1.0/3");
-}
-
-void map_replace_first_zone(void)
-{
-  bool ret = false;
-  int tmp_zone_idx = 0;
-  std::string elem_zone_original;
-  std::string elem_zone_code_original;
-  elem_zone  = std::get<0>(zones_map[tmp_zone_idx]);
-  elem_zone_code  = std::get<1>(zones_map[tmp_zone_idx]);
-  std::string elem_zone_check;
-  std::string elem_zone_code_check;
   
-  elem_zone_original = elem_zone; // make a copy
-  elem_zone_code_original = elem_zone_code;
-  elem_zone = NTP_TIMEZONE;
-  elem_zone_code = NTP_TIMEZONE_CODE;
-  zones_map[0] = std::make_tuple(elem_zone, elem_zone_code);
-  // Check:
-  elem_zone_check  = std::get<0>(zones_map[tmp_zone_idx]);
-  elem_zone_code_check  = std::get<1>(zones_map[tmp_zone_idx]);
+  for (int i = 0; i < nr_of_zones; ++i)
+  {
+    // Building variable names dynamically isn't directly possible, so you might want to define arrays instead
+    switch (i)
+    {
+      case 0:
+        zones_map[i] = std::make_tuple(SECRET_NTP_TIMEZONE0, SECRET_NTP_TIMEZONE0_CODE);
+        break;
+      case 1:
+        zones_map[i] = std::make_tuple(SECRET_NTP_TIMEZONE1, SECRET_NTP_TIMEZONE1_CODE);
+        break;
+      case 2:
+        zones_map[i] = std::make_tuple(SECRET_NTP_TIMEZONE2, SECRET_NTP_TIMEZONE2_CODE);
+        break;
+      case 3:
+        zones_map[i] = std::make_tuple(SECRET_NTP_TIMEZONE3, SECRET_NTP_TIMEZONE3_CODE);
+        break;
+      case 4:
+        zones_map[i] = std::make_tuple(SECRET_NTP_TIMEZONE4, SECRET_NTP_TIMEZONE4_CODE);
+        break;
+      case 5:
+        zones_map[i] = std::make_tuple(SECRET_NTP_TIMEZONE5, SECRET_NTP_TIMEZONE5_CODE);
+        break;
+      case 6:
+        zones_map[i] = std::make_tuple(SECRET_NTP_TIMEZONE6, SECRET_NTP_TIMEZONE6_CODE);
+        break;
+      default:
+        break;
+    }             
+  }
 }
 
 /* Show or remove NTP Time Sync notification on the middle of the top of the display */
@@ -310,56 +313,18 @@ bool set_RTC(void)
   return ret;
 }
 
-void poll_RTC(void)
-{
-  static constexpr const char txt1[] PROGMEM = "poll_RTC(): ";
-  std::shared_ptr<std::string> TAG = std::make_shared<std::string>(txt1);
-  time_t t = time(NULL);
-  delay(500);
-
-  t = std::time(nullptr);
-
-  if (my_debug)
-  {
-    static constexpr const char txt2[] PROGMEM = "ESP32 UTC : ";
-    std::tm* tm = std::gmtime(&t);  // for UTC.
-    std::cout << std::dec << *TAG << txt2
-      << std::setw(4) << (tm->tm_year+1900) << "-"
-      << std::setfill('0') << std::setw(2) << (tm->tm_mon+1) << "-"
-      << std::setfill('0') << std::setw(2) << (tm->tm_mday) << " ("
-      << wd[tm->tm_wday] << ") "
-      << std::setfill('0') << std::setw(2) << (tm->tm_hour) << ":"
-      << std::setfill('0') << std::setw(2) << (tm->tm_min)  << ":"
-      << std::setfill('0') << std::setw(2) << (tm->tm_sec)  << std::endl;
-  }
-
-  if (my_debug)
-  {
-    tm_local = localtime(&t);
-    elem_zone = std::get<0>(zones_map[zone_idx]);
-    static constexpr const char txt3[] PROGMEM = "ESP32 ";
-    std::cout << std::dec << *TAG << txt3 << elem_zone             << ": " 
-      << std::setw(4)                      << (tm_local->tm_year+1900) << "-"
-      << std::setfill('0') << std::setw(2) << (tm_local->tm_mon+1)     << "-"
-      << std::setfill('0') << std::setw(2) << (tm_local->tm_mday)      << " ("
-      << wd[tm_local->tm_wday] << ") "
-      << std::setfill('0') << std::setw(2) << (tm_local->tm_hour)      << ":"
-      << std::setfill('0') << std::setw(2) << (tm_local->tm_min)       << ":"
-      << std::setfill('0') << std::setw(2) << (tm_local->tm_sec) << std::endl;
-  }
-}
-
 void printLocalTime()  // "Local" of the current selected timezone!
 { 
   static constexpr const char txt1[] PROGMEM = "printLocalTime(): ";
   std::shared_ptr<std::string> TAG = std::make_shared<std::string>(txt1);
   if(!getLocalTime(&timeinfo)){
-    std::cout << "Failed to obtain time" << std::endl;
+    static constexpr const char txt2[] PROGMEM = "Failed to obtain time";
+    std::cout << txt2 << std::endl;
     return;
   }
-  static constexpr const char txt2[] PROGMEM = "Timezone: ";
-  static constexpr const char txt3[] PROGMEM = ", datetime: ";
-  std::cout << *TAG << txt2 << elem_zone.c_str() << txt3 << std::put_time(&timeinfo, "%Y-%m-%d %H:%M:%S") << std::endl;
+  static constexpr const char txt3[] PROGMEM = "Timezone: ";
+  static constexpr const char txt4[] PROGMEM = ", datetime: ";
+  std::cout << *TAG << txt3 << elem_zone.c_str() << txt4 << std::put_time(&timeinfo, "%Y-%m-%d %H:%M:%S") << std::endl;
 
 }
 
@@ -379,10 +344,10 @@ void disp_data(void)
   std::string copiedString, copiedString2;
   std::string part1, part2, part3, part4;
   std::string partUS1, partUS2;
-  int index, index2, index3 = -1;
+  int index1, index2, index3 = -1;
   copiedString =  elem_zone;
   // Search for a first forward slash (e.g.: "Europe/Lisbon")
-  index = copiedString.find('/');
+  index1 = copiedString.find('/');
   index3 = copiedString.find('_'); // e.g. in "New_York" or "Sao_Paulo"
 
   if (ck_touch())
@@ -396,10 +361,10 @@ void disp_data(void)
     partUS2 = copiedString.substr(index3+1);
     copiedString = partUS1 + " " + partUS2;  // replaces the found "_" by a space " "
   }
-  if (index >= 0)
+  if (index1 >= 0)
   {
-    part1 = copiedString.substr(0, index);
-    part2 = copiedString.substr(index+1);
+    part1 = copiedString.substr(0, index1);
+    part2 = copiedString.substr(index1+1);
 
     copiedString2 = part2.c_str();
 
@@ -426,7 +391,7 @@ if (ck_touch())
 
   M5.Display.clear(BLACK);
   M5Dial.Display.setTextColor(DISP_FG, DISP_BG);
-  if (index >= 0 && index2 >= 0)
+  if (index1 >= 0 && index2 >= 0)
   {
     M5Dial.Display.setCursor(hori[1], vert[1]+5);
     M5Dial.Display.print(part1.c_str());
@@ -435,7 +400,7 @@ if (ck_touch())
     M5Dial.Display.setCursor(hori[1], vert[3]-10);
     M5Dial.Display.print(part4.c_str());
   }
-  else if (index >= 0)
+  else if (index1 >= 0)
   {
     M5Dial.Display.setCursor(hori[1], vert[1]+5);
     M5Dial.Display.print(part1.c_str());
@@ -498,8 +463,9 @@ if (ck_touch())
     M5Dial.Display.printf("in %s\n", part4.c_str());
     // std::cout << *TAG << "part4 = " << part4.c_str() << ", index2 = " << index2 << std::endl;
   }
-  else
+  else if (index1 >= 0)
     M5Dial.Display.printf("in %s\n", part2.c_str());
+  
   if (ck_touch()) return;
   delay(disp_data_delay);
 }
@@ -746,10 +712,6 @@ void setup(void)
 
   create_maps();  // creeate zones_map
 
-  map_replace_first_zone();
-
-  zone_idx = 0;
-
   delay(1000);
 
   /* Try to establish WiFi connection. If so, Initialize NTP, */
@@ -783,7 +745,7 @@ void setup(void)
     static constexpr const char txt6[] PROGMEM = "sntp sync status = ";
     std::cout << *TAG << txt6 << std::to_string(status) << std::endl;
 
-    zone_idx = 0;
+    zone_idx = 0; // needed to set here. Is needed in setTimezone()
     setTimezone();
   }
   else
@@ -934,31 +896,24 @@ void loop(void)
         TimeToChangeZone = true;
         zone_chg_start_t = zone_chg_curr_t;
         /*
-          Increases the Display color index.
-        */
-        FSM++;
-        if (FSM >= 6)
-        {
-          FSM = 0;
-        }
-        /*
         Increase the zone_index, so that the sketch
         will display data from a next timezone in the map: time_zones.
         */
-        zone_idx++;
-        if (zone_idx >= zone_max_idx)
-        {
+        if (zone_idx < (nr_of_zones-1))
+          zone_idx++;
+        else
           zone_idx = 0;
-        }
+        if (zone_idx == 0)
+          std::cout << std::endl; // blank line
+        std::cout << *TAG << "new zone_idx = " << zone_idx << std::endl;
+
         setTimezone();
         TimeToChangeZone = false;
-        poll_RTC();
         printLocalTime();
         if (display_on)
         {
           disp_data();
         }
-        Done = 0; // Reset this count also
       }
     }
     if (buttonPressed)
