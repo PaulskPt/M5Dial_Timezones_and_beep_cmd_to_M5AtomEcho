@@ -30,7 +30,7 @@ Since 2024-10-11 there are two versions of the M5Dial part:
 After applying power to the M5Dial device, the sketch will sequentially display data of six pre-programmed timezones.
 
 
-For each of the six timezones, in four steps, the following data will be displayed:
+For each of the seven timezones, in four steps, the following data will be displayed:
    1) Time zone continent and city, for example: "Europe" and "Lisbon"; 
    2) the word "Zone" and the Timezone in letters, for example "CEST", and the offset to UTC, for example "+0100";
    3) date info, for example "Monday September 30 2024"; 
@@ -75,19 +75,19 @@ The sketch will also send a digital impulse via GROVE PORT B of the M5Dial, pin 
 The internal RTC of the M5Dial device will be set to the NTP datetime stamp with the local time for the current Timezone.
 Next the sketch will display time zone name, timezone offset from UTC, date and time of the current Timezone.
 
-In the M5Dial sketch is pre-programmed a map (dictionary), name ```zones_map```. This map contains six timezones:
+In the M5Dial sketch is pre-programmed a map (dictionary), name ```zones_map```. At start, the function ```create_maps()```
+will import all the timezone and timezone_code strings from the file ```secret.h``` into the map ```zones_map```, resulting
+in the following map:
 
 ```
-    zones_map[0] = std::make_tuple("Asia/Tokyo", "JST-9");
-    zones_map[1] = std::make_tuple("America/Kentucky/Louisville", "EST5EDT,M3.2.0,M11.1.0");
-    zones_map[2] = std::make_tuple("America/New_York", "EST5EDT,M3.2.0,M11.1.0");
-    zones_map[3] = std::make_tuple("America/Sao_Paulo", "<-03>3");
+    zones_map[0] = std::make_tuple("America/Kentucky/Louisville", "EST5EDT,M3.2.0,M11.1.0");
+    zones_map[1] = std::make_tuple("America/New_York", "EST5EDT,M3.2.0,M11.1.0");
+    zones_map[2] = std::make_tuple("America/Sao_Paulo", "<-03>3");
+    zones_map[3] = std::make_tuple("Europe/Lisbon","WET0WEST,M3.5.0/1,M10.5.0");
     zones_map[4] = std::make_tuple("Europe/Amsterdam", "CET-1CEST,M3.5.0,M10.5.0/3");
-    zones_map[5] = std::make_tuple("Australia/Sydney", "AEST-10AEDT,M10.1.0,M4.1.0/3");
+    zones_map[5] = std::make_tuple("Asia/Tokyo", "JST-9");
+    zones_map{6] = std::make_tuple("Australia/Sydney", "AEST-10AEDT,M10.1.0,M4.1.0/3");
 ```
-
- After reset of the M5Dial the sketch will load from the file ```secret.h``` the values of ```SECRET_NTP_TIMEZONE``` and ```SECRET_NTP_TIMEZONE_CODE```, 
- and replaces the first record in the map ```zones_map``` with these values from secret.h.
 
 M5Dial Debug output:
 
