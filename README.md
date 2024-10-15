@@ -115,7 +115,7 @@ Update the file secret.h as far as needed:
     #define SECRET_NTP_TIMEZONE6 "Australia/Sydney"
     #define SECRET_NTP_TIMEZONE6_CODE "AEST-10AEDT,M10.1.0,M4.1.0/3"
 
-As you can see, the timezones are ordered in offset to UTC. 
+As you can see, I have the timezones are ordered in offset to UTC, however this is not a must.
 
 ```
 
