@@ -97,7 +97,28 @@ Update the file secret.h as far as needed:
  b) your WiFi PASSWORD in SECRET_PASS;
  c) your timezone in SECRET_NTP_TIMEZONE, for example: Europe/Lisbon;
  d) your timezone code in SECRET_NTP_TIMEZONE_CODE, for example: WET0WEST,M3.5.0/1,M10.5.0;
- e) the name of the NTP server of your choice in SECRET_NTP_SERVER_1, for example: 2.pt.pool.ntp.org.
+ e) the name of the NTP server of your choice in SECRET_NTP_SERVER_1, for example: 2.pt.pool.ntp.org;
+ f) the SECRET_NTP_NR_OF_ZONES as a string, e.g.: "7";
+ f) the TIMEZONE and TIMEZONE_CODE texts for each of the zones you want to be displayed.
+
+ At this moment file secret.h has the following timezones and timezone_codes defined:
+    #define SECRET_NTP_TIMEZONE0 "America/Kentucky/Louisville"
+    #define SECRET_NTP_TIMEZONE0_CODE "EST5EDT,M3.2.0,M11.1.0"
+    #define SECRET_NTP_TIMEZONE1 "America/New_York"
+    #define SECRET_NTP_TIMEZONE1_CODE "EST5EDT,M3.2.0,M11.1.0"
+    #define SECRET_NTP_TIMEZONE2 "America/Sao_Paulo"
+    #define SECRET_NTP_TIMEZONE2_CODE "<-03>3"
+    #define SECRET_NTP_TIMEZONE3 "Europe/Lisbon"
+    #define SECRET_NTP_TIMEZONE3_CODE "WET0WEST,M3.5.0/1,M10.5.0"
+    #define SECRET_NTP_TIMEZONE4 "Europe/Amsterdam"
+    #define SECRET_NTP_TIMEZONE4_CODE "CET-1CEST,M3.5.0,M10.5.0/3"
+    #define SECRET_NTP_TIMEZONE5 "Asia/Tokyo"
+    #define SECRET_NTP_TIMEZONE5_CODE "JST-9"
+    #define SECRET_NTP_TIMEZONE6 "Australia/Sydney"
+    #define SECRET_NTP_TIMEZONE6_CODE "AEST-10AEDT,M10.1.0,M4.1.0/3"
+
+As you can see, the timezones are ordered in offset to UTC. 
+
 ```
 
 The M5Atom Echo part:
