@@ -1,0 +1,212 @@
+2024-10-15 11h55, 13h08 and 13h47 utc+1
+
+Board: M5Stack M5Dial with connected to Port B: M5 Atom Echo
+
+Arduino IDE v2.3.3
+
+Sketch: M5Dial_Timezones_and_M5Echo_with_RFID.ino
+
+Note: After big changes regarding timezone and timezone_code:
+       - moved all timezone and timezone_code strings to file secret.h.
+	   - function create_maps() does the import of all timezone and timezone_code strings from file secret.h.
+
+Note: to prevent 100% memory usage, I deleted some functions. Deleted all if (my_debug){...} blocks;
+      used "static constexpr const" and "PROGMEM" directives to try to move variables to program memory.
+
+
+Compile/build/flash output:
+Sketch uses 1282429 bytes (97%) of program storage space. Maximum is 1310720 bytes.
+Global variables use 51452 bytes (15%) of dynamic memory, leaving 276228 bytes for local variables. Maximum is 327680 bytes.
+esptool.py v4.6
+Serial port COM6
+Connecting...
+Chip is ESP32-S3 (revision v0.2)
+Features: WiFi, BLE
+Crystal is 40MHz
+MAC: 24:58:7c:53:c2:c4
+Uploading stub...
+Running stub...
+Stub running...
+Changing baud rate to 921600
+Changed.
+Configuring flash size...
+Flash will be erased from 0x00000000 to 0x00004fff...
+Flash will be erased from 0x00008000 to 0x00008fff...
+Flash will be erased from 0x0000e000 to 0x0000ffff...
+Flash will be erased from 0x00010000 to 0x00149fff...
+Compressed 19504 bytes to 12970...
+Writing at 0x00000000... (100 %)
+Wrote 19504 bytes (12970 compressed) at 0x00000000 in 0.3 seconds (effective 497.7 kbit/s)...
+Hash of data verified.
+Compressed 3072 bytes to 146...
+Writing at 0x00008000... (100 %)
+Wrote 3072 bytes (146 compressed) at 0x00008000 in 0.0 seconds (effective 519.7 kbit/s)...
+Hash of data verified.
+Compressed 8192 bytes to 47...
+Writing at 0x0000e000... (100 %)
+Wrote 8192 bytes (47 compressed) at 0x0000e000 in 0.1 seconds (effective 740.2 kbit/s)...
+Hash of data verified.
+Compressed 1282800 bytes to 781981...
+Writing at 0x00010000... (2 %)
+Writing at 0x00016eeb... (4 %)
+Writing at 0x000231dc... (6 %)
+Writing at 0x0002bb33... (8 %)
+Writing at 0x00030a8d... (10 %)
+Writing at 0x00039810... (12 %)
+Writing at 0x0004e8d5... (14 %)
+Writing at 0x0005cacf... (16 %)
+Writing at 0x000627e4... (18 %)
+Writing at 0x00067dd4... (20 %)
+Writing at 0x0006d7e5... (22 %)
+Writing at 0x00073255... (25 %)
+Writing at 0x0007898e... (27 %)
+Writing at 0x0007e435... (29 %)
+Writing at 0x00083c00... (31 %)
+Writing at 0x000893f2... (33 %)
+Writing at 0x0008e460... (35 %)
+Writing at 0x0009331a... (37 %)
+Writing at 0x000984fd... (39 %)
+Writing at 0x0009d55c... (41 %)
+Writing at 0x000a2ce8... (43 %)
+Writing at 0x000a8058... (45 %)
+Writing at 0x000acfc0... (47 %)
+Writing at 0x000b1f55... (50 %)
+Writing at 0x000b75ba... (52 %)
+Writing at 0x000bca81... (54 %)
+Writing at 0x000c2721... (56 %)
+Writing at 0x000c7af6... (58 %)
+Writing at 0x000cce67... (60 %)
+Writing at 0x000d1d69... (62 %)
+Writing at 0x000d6eea... (64 %)
+Writing at 0x000dbdde... (66 %)
+Writing at 0x000e11e3... (68 %)
+Writing at 0x000e653d... (70 %)
+Writing at 0x000ebbe3... (72 %)
+Writing at 0x000f27c2... (75 %)
+Writing at 0x000fac40... (77 %)
+Writing at 0x0010350d... (79 %)
+Writing at 0x0010c36d... (81 %)
+Writing at 0x00111be6... (83 %)
+Writing at 0x00117244... (85 %)
+Writing at 0x0011e28d... (87 %)
+Writing at 0x001265fd... (89 %)
+Writing at 0x0012c70c... (91 %)
+Writing at 0x00133a6b... (93 %)
+Writing at 0x0013a21d... (95 %)
+Writing at 0x0013f678... (97 %)
+Writing at 0x00144d2e... (100 %)
+Wrote 1282800 bytes (781981 compressed) at 0x00010000 in 9.1 seconds (effective 1122.3 kbit/s)...
+Hash of data verified.
+
+Leaving...
+Hard resetting via RTS pin...
+
+------------------------------------------------------------------
+
+Monitor output (partially):
+
+11:56:04.264 -> ESP-ROM:esp32s3-20210327
+11:56:04.309 -> Build:Mar 27 2021
+11:56:04.309 -> rst:0xc (RTC_SW_CPU_RST),boot:0x8 (SPI_FAST_FLASH_BOOT)
+11:56:04.309 -> Saved PC:0x4037afa2
+11:56:04.309 -> SPIWP:0xee
+11:56:04.309 -> mode:DIO, clock div:1
+11:56:04.309 -> load:0x3fce3818,len:0x109c
+11:56:04.309 -> load:0x403c9700,len:0x4
+11:56:04.309 -> load:0x403c9704,len:0xb50
+11:56:04.309 -> load:0x403cc700,len:0x2fe4
+11:56:04.309 -> entry 0x403c98ac
+11:56:04.718 -> 
+11:56:04.718 -> 
+11:56:04.718 -> setup(): M5Stack M5Dial Timezones and M5Atom Echo with RFID test.
+11:56:04.718 -> setup(): setting display brightness to 50 (range 0-255)
+11:56:09.323 -> 
+
+11:56:09.323 -> WiFi Connected
+11:56:09.323 -> sntp_initialize(): sntp polling interval: 15 Minute(s)
+11:56:09.323 -> setup(): sntp sync status = 0
+11:56:10.181 -> initTime(): Setting configTzTime to: "WET0WEST,M3.5.0/1,M10.5.0"
+11:56:10.181 -> initTime(): NTP Connected. 
+11:56:10.353 -> loop(): global flag use_rfid = True
+11:56:11.136 -> time_sync_notification_cb(): time synchronized at time (UTC): Tue Oct 15 10:56:11 2024   <<<=== NTP sync
+11:56:11.429 -> loop(): new zone_idx = 0
+11:56:11.649 -> mtp_sync_notification_txt(): Sending beep command to the M5 Atom Echo device
+11:56:12.460 -> printLocalTime(): Timezone: Europe/Lisbon, datetime: 2024-10-15 11:56:13
+11:56:37.260 -> loop(): new zone_idx = 1
+11:56:38.302 -> printLocalTime(): Timezone: Europe/Amsterdam, datetime: 2024-10-15 12:56:38
+11:57:03.130 -> loop(): new zone_idx = 2
+11:57:04.099 -> printLocalTime(): Timezone: America/Kentucky/Louisville, datetime: 2024-10-15 06:57:04
+11:57:28.961 -> loop(): new zone_idx = 3
+11:57:29.985 -> printLocalTime(): Timezone: America/New_York, datetime: 2024-10-15 06:57:30
+11:57:54.799 -> loop(): new zone_idx = 4
+11:57:55.813 -> printLocalTime(): Timezone: America/Sao_Paulo, datetime: 2024-10-15 07:57:56
+11:58:20.607 -> loop(): new zone_idx = 5
+11:58:21.638 -> printLocalTime(): Timezone: Australia/Sydney, datetime: 2024-10-15 21:58:22
+11:58:46.478 -> loop(): new zone_idx = 6
+11:58:47.463 -> printLocalTime(): Timezone: Asia/Tokyo, datetime: 2024-10-15 19:58:48
+
+-------------------------------------------------------------------
+After a small correction regarding incrementing zone_idx in loop():
+-------------------------------------------------------------------
+
+13:08:41.321 -> loop(): new zone_idx = 0
+13:08:42.324 -> printLocalTime(): Timezone: America/Kentucky/Louisville, datetime: 2024-10-15 08:08:43
+13:09:07.170 -> loop(): new zone_idx = 1
+13:09:08.126 -> printLocalTime(): Timezone: America/New_York, datetime: 2024-10-15 08:09:08
+13:09:32.974 -> loop(): new zone_idx = 2
+13:09:33.968 -> printLocalTime(): Timezone: America/Sao_Paulo, datetime: 2024-10-15 09:09:34
+13:09:58.808 -> loop(): new zone_idx = 3
+13:09:59.821 -> printLocalTime(): Timezone: Europe/Lisbon, datetime: 2024-10-15 13:10:00
+13:10:24.666 -> loop(): new zone_idx = 4
+13:10:25.621 -> printLocalTime(): Timezone: Europe/Amsterdam, datetime: 2024-10-15 14:10:26
+13:10:50.458 -> loop(): new zone_idx = 5
+13:10:51.496 -> printLocalTime(): Timezone: Asia/Tokyo, datetime: 2024-10-15 21:10:52
+13:11:16.302 -> loop(): new zone_idx = 6
+13:11:17.277 -> printLocalTime(): Timezone: Australia/Sydney, datetime: 2024-10-15 23:11:18
+13:11:42.111 -> loop(): new zone_idx = 0
+13:11:43.111 -> printLocalTime(): Timezone: America/Kentucky/Louisville, datetime: 2024-10-15 08:11:43
+13:12:07.952 -> loop(): new zone_idx = 1
+13:12:08.984 -> printLocalTime(): Timezone: America/New_York, datetime: 2024-10-15 08:12:09
+13:12:33.821 -> loop(): new zone_idx = 2
+13:12:34.818 -> printLocalTime(): Timezone: America/Sao_Paulo, datetime: 2024-10-15 09:12:35
+13:12:59.648 -> loop(): new zone_idx = 3
+13:13:00.663 -> printLocalTime(): Timezone: Europe/Lisbon, datetime: 2024-10-15 13:13:01
+
+-------------------------------------------------------------------------
+Added a space line in the Monitor output at the begin of a 7-zones cycle:
+-------------------------------------------------------------------------
+13:47:59.742 -> 
+13:47:59.742 -> loop(): new zone_idx = 0
+13:48:00.720 -> printLocalTime(): Timezone: America/Kentucky/Louisville, datetime: 2024-10-15 08:48:01
+13:48:25.604 -> loop(): new zone_idx = 1
+13:48:26.584 -> printLocalTime(): Timezone: America/New_York, datetime: 2024-10-15 08:48:27
+13:48:51.416 -> loop(): new zone_idx = 2
+13:48:52.428 -> printLocalTime(): Timezone: America/Sao_Paulo, datetime: 2024-10-15 09:48:53
+13:49:17.249 -> loop(): new zone_idx = 3
+13:49:18.260 -> printLocalTime(): Timezone: Europe/Lisbon, datetime: 2024-10-15 13:49:19
+13:49:43.076 -> loop(): new zone_idx = 4
+13:49:44.062 -> printLocalTime(): Timezone: Europe/Amsterdam, datetime: 2024-10-15 14:49:44
+13:50:08.934 -> loop(): new zone_idx = 5
+13:50:09.899 -> printLocalTime(): Timezone: Asia/Tokyo, datetime: 2024-10-15 21:50:10
+13:50:34.739 -> loop(): new zone_idx = 6
+13:50:35.736 -> printLocalTime(): Timezone: Australia/Sydney, datetime: 2024-10-15 23:50:36
+13:51:00.582 -> 
+13:51:00.582 -> loop(): new zone_idx = 0
+13:51:01.592 -> printLocalTime(): Timezone: America/Kentucky/Louisville, datetime: 2024-10-15 08:51:02
+13:51:26.406 -> loop(): new zone_idx = 1
+13:51:27.423 -> printLocalTime(): Timezone: America/New_York, datetime: 2024-10-15 08:51:28
+13:51:52.246 -> loop(): new zone_idx = 2
+13:51:53.264 -> printLocalTime(): Timezone: America/Sao_Paulo, datetime: 2024-10-15 09:51:54
+13:52:18.059 -> loop(): new zone_idx = 3
+13:52:19.074 -> printLocalTime(): Timezone: Europe/Lisbon, datetime: 2024-10-15 13:52:19
+13:52:43.918 -> loop(): new zone_idx = 4
+13:52:44.923 -> printLocalTime(): Timezone: Europe/Amsterdam, datetime: 2024-10-15 14:52:45
+
+[...]
+
+14:02:59.742 -> initTime(): NTP Connected. 
+14:03:00.724 -> time_sync_notification_cb(): time synchronized at time (UTC): Tue Oct 15 13:03:01 2024   <<<=== NTP sync
+14:03:01.207 -> mtp_sync_notification_txt(): Sending beep command to the M5 Atom Echo device
+14:03:03.853 -> 
+14:03:03.890 -> loop(): new zone_idx = 0
+14:03:04.854 -> printLocalTime(): Timezone: America/Kentucky/Louisville, datetime: 2024-10-15 09:03:05
