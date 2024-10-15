@@ -27,7 +27,7 @@ Since 2024-10-11 there are two versions of the M5Dial part:
    for example: ```2b8e3942``` (letters in lower case). A global variable ```use_rfid``` (default: ```true```), controls if RFID recognition
    will be active or not (in that case display touch will be the way to put the display asleep or awake).
 
-After applying power to the M5Dial device, the sketch will sequentially display data of six pre-programmed timezones.
+After applying power to the M5Dial device, the sketch will sequentially display data of seven pre-programmed timezones.
 
 
 For each of the seven timezones, in four steps, the following data will be displayed:
@@ -39,7 +39,7 @@ For each of the seven timezones, in four steps, the following data will be displ
 Each time zone sequence of four displays is repeated for 25 seconds. This repeat time is defined in function ```loop()```:
 
 ```
-1045 unsigned long const zone_chg_interval_t = 25 * 1000L; // 25 seconds
+762 unsigned long const zone_chg_interval_t = 25 * 1000L; // 25 seconds
 ```
 
 M5Dial Display:
@@ -52,11 +52,7 @@ The M5Dial has a built-in speaker, however my experience is that the sound is ve
 I also experienced that the audibility of the speaker sound depends on the frequency of the tone played. Another thing I noticed is that when using the speaker, the NTP Time Synchronization moment is delayed each time by 2 seconds. When the speaker is not used, there is no delay in the NTP Time Synchronization moment.
 For this reason I decided not to use the M5Dial speaker. As an alternative I added a text in the toprow (see below under ```M5Dial Reset:```),
 and in this repo, I added functionality to "use" the ability of the M5Atom Echo device to produce nice sounds, also louder than the speaker of the M5Dial device can produce.
-The function ```send_cmd_to_AtomEcho()``` is called at the moment of NTP Time Synchronization, however only when the display is awake. When the display is asleep (off), because the user touched the display to put it asleep, for example to have the display asleep during night time, no beep commands will be send to the Atom Echo device. We don't want sounds during the night or other moments of silence. To control the sound of the M5Dial itself, there is the global variable spkr_on. Default state of this flag: false, because we use the external M5Atom Echo device:
-
-```
-79 bool spkr_on = false;
-```
+The function ```send_cmd_to_AtomEcho()``` is called at the moment of NTP Time Synchronization, however only when the display is awake. When the display is asleep (off), because the user touched the display to put it asleep, for example to have the display asleep during night time, no beep commands will be send to the Atom Echo device. We don't want sounds during the night or other moments of silence.
 
 M5Dial reset:
 
@@ -91,8 +87,7 @@ in the following map:
 
 M5Dial Debug output:
 
-In the sketch file of the M5Dial, added a global variable ```my_debug```. The majority of monitor output I made conditionally controlled by this new ```my_debug```.
-See the difference in monitor output in the two monitor_output.txt files.
+Because of memory limitations all of the if (my_debug) {...} blocks were removed.
 
 File secret.h:
 
