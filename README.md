@@ -95,11 +95,9 @@ Update the file secret.h as far as needed:
 ```
  a) your WiFi SSID in SECRET_SSID;
  b) your WiFi PASSWORD in SECRET_PASS;
- c) your timezone in SECRET_NTP_TIMEZONE, for example: Europe/Lisbon;
- d) your timezone code in SECRET_NTP_TIMEZONE_CODE, for example: WET0WEST,M3.5.0/1,M10.5.0;
- e) the name of the NTP server of your choice in SECRET_NTP_SERVER_1, for example: 2.pt.pool.ntp.org;
- f) the SECRET_NTP_NR_OF_ZONES as a string, e.g.: "7";
- f) the TIMEZONE and TIMEZONE_CODE texts for each of the zones you want to be displayed.
+ c) the name of the NTP server of your choice in SECRET_NTP_SERVER_1, for example: 2.pt.pool.ntp.org;
+ d) the SECRET_NTP_NR_OF_ZONES as a string, e.g.: "7";
+ e) the TIMEZONE and TIMEZONE_CODE texts for each of the zones you want to be displayed.
 
  At this moment file secret.h has the following timezones and timezone_codes defined:
     #define SECRET_NTP_TIMEZONE0 "America/Kentucky/Louisville"
