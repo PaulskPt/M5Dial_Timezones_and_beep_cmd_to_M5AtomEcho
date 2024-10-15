@@ -114,8 +114,12 @@ which last two files define the ```class ATOMECHOSPKR```, used by the sketch.
 The sketch has functionality to make the M5Atom Echo device to "listen" on Pin1 of the GROVE PORT for a digital impulse (read: beep command)
 sent by the M5Dial at moment of a NTP Time Synchronization.
 
-Update: 2024-10-09: added functionality to switch sound ON/off by double press of the button. If sound is off, the RGB Led will show BLUE color.
+Updates:
+
+2024-10-09: Version 1 for the M5Dial: added functionality to switch sound ON/off by double press of the button. If sound is off, the RGB Led will show BLUE color.
 If sound is ON (default), the RGB Led will show RED color.
+
+2025-10-14: Version 2 for M5Dial: I had to delete a lot of ```if (my_debug)``` blocks and use other measures regarding definitions of certain variables containing texts to get rid of a ```memory full``` error while compiling the sketch. After these measures the memory is occupied for 97 percent. The sketch compiles OK.
 
 
 Docs:
