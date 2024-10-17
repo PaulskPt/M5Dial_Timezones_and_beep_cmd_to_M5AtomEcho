@@ -132,14 +132,11 @@ std::map<int, std::tuple<std::string, std::string>> zones_map;
 
 //} // end of namespace
 
-void create_maps() 
-{
+void create_maps() {
   
-  for (int i = 0; i < nr_of_zones; ++i)
-  {
+  for (int i = 0; i < nr_of_zones; ++i) {
     // Building variable names dynamically isn't directly possible, so you might want to define arrays instead
-    switch (i)
-    {
+    switch (i) {
       case 0:
         zones_map[i] = std::make_tuple(SECRET_NTP_TIMEZONE0, SECRET_NTP_TIMEZONE0_CODE);
         break;
@@ -168,10 +165,8 @@ void create_maps()
 }
 
 /* Show or remove NTP Time Sync notification on the middle of the top of the display */
-void ntp_sync_notification_txt(bool show)
-{
-  if (show)
-  {
+void ntp_sync_notification_txt(bool show) {
+  if (show) {
     static constexpr const char txt1[] PROGMEM = "ntp_sync_notification_txt(): ";
     std::shared_ptr<std::string> TAG = std::make_shared<std::string>(txt1);
     static constexpr const char txt2[] PROGMEM = "beep command to the M5 Atom Echo device";
@@ -190,19 +185,14 @@ void ntp_sync_notification_txt(bool show)
        In that case we don't want nightly sounds!
     */
 
-    if (display_on)
-    {
+    if (display_on) {
       std::cout << *TAG << "Sending " << (txt2) << std::endl;
       send_cmd_to_AtomEcho(); // Send a digital signal to the Atom Echo to produce a beep
-    }
-    else
-    {
+    } else {
       static constexpr const char txt3[] PROGMEM = "Display is Off. Not sending ";
       std::cout << *TAG << txt3 << (txt2) << std::endl;
     }
-  }
-  else
-  {
+  } else {
     //M5Dial.Display.fillRect(dw/2-25, 15, 50, 25, BLACK);
     M5Dial.Display.fillRect(0, 0, dw-1, 55, BLACK);
   }
@@ -218,8 +208,7 @@ void ntp_sync_notification_txt(bool show)
 
 /* Code by MS CoPilot */
 // The sntp callback function
-void time_sync_notification_cb(struct timeval *tv) 
-{
+void time_sync_notification_cb(struct timeval *tv) {
   static constexpr const char txt1[] PROGMEM = "time_sync_notification_cb(): ";
   std::shared_ptr<std::string> TAG = std::make_shared<std::string>(txt1);
 
@@ -243,19 +232,16 @@ void time_sync_notification_cb(struct timeval *tv)
   // ... end of addition by @PaulskPt
 
   // Set the starting epoch time if not set, only when lStart is true
-  if (lStart && (time_sync_epoch_at_start == 0) && (currentTime > 0))
-  {
+  if (lStart && (time_sync_epoch_at_start == 0) && (currentTime > 0)) {
     time_sync_epoch_at_start = currentTime;  // Set only once!
   }
 
   // Set the last sync epoch time if not set
-  if ((last_time_sync_epoch == 0) && (currentTime > 0))
-  {
+  if ((last_time_sync_epoch == 0) && (currentTime > 0)) {
     last_time_sync_epoch = currentTime;
   }
 
-  if (currentTime > 0) 
-  {   
+  if (currentTime > 0) {   
     // code added by @PaulskPt to test my ideas
     diff_t = currentTime - last_time_sync_epoch;
     last_time_sync_epoch = currentTime;
@@ -273,8 +259,7 @@ void time_sync_notification_cb(struct timeval *tv)
     std::cout << *TAG << txt8 << " = " << diff_t << std::endl;
 #endif
 
-    if ((diff_t >= CONFIG_LWIP_SNTP_UPDATE_DELAY_IN_SECONDS) || lStart)
-    {
+    if ((diff_t >= CONFIG_LWIP_SNTP_UPDATE_DELAY_IN_SECONDS) || lStart) {
       sync_time = true; // See loop initTime
       ntp_sync_notification_txt(true);
     }
@@ -284,12 +269,10 @@ void time_sync_notification_cb(struct timeval *tv)
 
 /* ... End of code by MS CoPilot */
 
-void esp_sntp_initialize()
-{
+void esp_sntp_initialize() {
   static constexpr const char txt1[] PROGMEM = "sntp_initialize(): ";
   std::shared_ptr<std::string> TAG = std::make_shared<std::string>(txt1);
-   if (esp_sntp_enabled()) 
-  { 
+   if (esp_sntp_enabled()) { 
     esp_sntp_stop();  // prevent initialization error
   }
   esp_sntp_setoperatingmode(SNTP_OPMODE_POLL);
@@ -305,14 +288,12 @@ void esp_sntp_initialize()
   std::cout << *TAG << txt4 << std::to_string(rcvd_sync_interval_secs/60000) << txt5 << std::endl;
 }
 
-void setTimezone(void)
-{
+void setTimezone(void) {
   static constexpr const char txt1[] PROGMEM = "setTimezone(): ";
   std::shared_ptr<std::string> TAG = std::make_shared<std::string>(txt1);
   elem_zone = std::get<0>(zones_map[zone_idx]);
   elem_zone_code = std::get<1>(zones_map[zone_idx]);
-  if (elem_zone_code != elem_zone_code_old)
-  {
+  if (elem_zone_code != elem_zone_code_old) {
     elem_zone_code_old = elem_zone_code;
     const char s1[] PROGMEM = "has changed to: ";
     zone_has_changed = true;
@@ -323,8 +304,7 @@ void setTimezone(void)
   delay(500);
 }
 
-bool initTime(void)
-{
+bool initTime(void) {
   bool ret = false;
   static constexpr const char txt1[] PROGMEM = "initTime(): ";
   std::shared_ptr<std::string> TAG = std::make_shared<std::string>(txt1);
@@ -346,8 +326,7 @@ bool initTime(void)
   configTzTime(my_tz_code.c_str(), NTP_SERVER1, NTP_SERVER2, NTP_SERVER3);  // This one is use for the M5Stack Atom Matrix
 #endif
 
-  while (!getLocalTime(&timeinfo, 1000))
-  {
+  while (!getLocalTime(&timeinfo, 1000)) {
     std::cout << "." << std::flush;
     delay(1000);
   };
@@ -356,34 +335,28 @@ bool initTime(void)
 
   if (timeinfo.tm_sec == 0 && timeinfo.tm_min  == 0 && timeinfo.tm_hour  == 0 &&
       timeinfo.tm_mday == 0 && timeinfo.tm_mon  == 0 && timeinfo.tm_year  == 0 &&
-      timeinfo.tm_wday == 0 && timeinfo.tm_yday == 0 && timeinfo.tm_isdst == 0)
-  {
+      timeinfo.tm_wday == 0 && timeinfo.tm_yday == 0 && timeinfo.tm_isdst == 0) {
     static constexpr const char txt9[] PROGMEM = "Failed to obtain datetime from NTP";
     std::cout << *TAG << txt9 << std::endl;
-  }
-  else
-  {
+  } else {
     setTimezone();
     ret = true;
   }
   return ret;
 }
 
-bool set_RTC(void)
-{
+bool set_RTC(void) {
   bool ret = false;
   static constexpr const char txt1[] PROGMEM = "set_RTC(): ";
   std::shared_ptr<std::string> TAG = std::make_shared<std::string>(txt1);
   struct tm my_timeinfo;
-  if(!getLocalTime(&my_timeinfo))
-  {
+  if(!getLocalTime(&my_timeinfo)) {
     static constexpr const char txt2[] PROGMEM = "Failed to obtain time";
     std::cout << *TAG << txt2 << std::endl;
     return ret;
   }
 
-  if (my_timeinfo.tm_year + 1900 > 1900)
-  {
+  if (my_timeinfo.tm_year + 1900 > 1900) {
     //                            YYYY  MM  DD      hh  mm  ss
     //M5Dial.Rtc.setDateTime( { { 2021, 12, 31 }, { 12, 34, 56 } } );
     M5Dial.Rtc.setDateTime( {{my_timeinfo.tm_year + 1900, my_timeinfo.tm_mon + 1, 
@@ -393,8 +366,7 @@ bool set_RTC(void)
   return ret;
 }
 
-void printLocalTime()  // "Local" of the current selected timezone!
-{ 
+void printLocalTime() { // "Local" of the current selected timezone!
   static constexpr const char txt1[] PROGMEM = "printLocalTime(): ";
   std::shared_ptr<std::string> TAG = std::make_shared<std::string>(txt1);
   if(!getLocalTime(&timeinfo)){
@@ -412,8 +384,7 @@ void printLocalTime()  // "Local" of the current selected timezone!
    The function also displays timezone info.
    It also calls ck_Btn() four times to increase a "catch" of BtnA keypress.
 */
-void disp_data(void)
-{
+void disp_data(void) {
   static constexpr const char txt1[] PROGMEM = "disp_data(): ";
   std::shared_ptr<std::string> TAG = std::make_shared<std::string>(txt1);
   int disp_data_delay = 1000;
@@ -430,21 +401,16 @@ void disp_data(void)
   index1 = copiedString.find('/');
   index3 = copiedString.find('_'); // e.g. in "New_York" or "Sao_Paulo"
 
-  if (ck_touch())
-    return;
-  if (ck_Btn())
-    return;
-  if(sync_time)
-    return;
+  if (ck_touch()) return;
+  if (ck_Btn()) return;
+  if(sync_time) return;
 
-  if (index3 >= 0)
-  {
+  if (index3 >= 0) {
     partUS1 = copiedString.substr(0, index3);
     partUS2 = copiedString.substr(index3+1);
     copiedString = partUS1 + " " + partUS2;  // replaces the found "_" by a space " "
   }
-  if (index1 >= 0)
-  {
+  if (index1 >= 0) {
     part1 = copiedString.substr(0, index1);
     part2 = copiedString.substr(index1+1);
 
@@ -452,55 +418,44 @@ void disp_data(void)
 
     // Search for a second forward slash  (e.g.: "America/Kentucky/Louisville")
     index2 = copiedString2.find('/'); 
-    if (index2 >= 0)
-    {
+    if (index2 >= 0) {
       part3 = copiedString2.substr(0, index2);
       part4 = copiedString2.substr(index2+1);
     }
   }
   struct tm my_timeinfo;
-  if(!getLocalTime(&my_timeinfo))
-  {
+  if(!getLocalTime(&my_timeinfo)) {
     static constexpr const char txt2[] PROGMEM = "Failed to obtain time";
     std::cout << txt2 << std::endl;
     return;
   }
   // =========== 1st view =================
-if (ck_touch())
-    return;
- if (ck_Btn())
-    return;
+if (ck_touch()) return;
+ if (ck_Btn()) return;
 
   M5.Display.clear(BLACK);
   M5Dial.Display.setTextColor(DISP_FG, DISP_BG);
-  if (index1 >= 0 && index2 >= 0)
-  {
+  if (index1 >= 0 && index2 >= 0) {
     M5Dial.Display.setCursor(hori[1], vert[1]+5);
     M5Dial.Display.print(part1.c_str());
     M5Dial.Display.setCursor(hori[1], vert[2]-2);
     M5Dial.Display.print(part3.c_str());
     M5Dial.Display.setCursor(hori[1], vert[3]-10);
     M5Dial.Display.print(part4.c_str());
-  }
-  else if (index1 >= 0)
-  {
+  } else if (index1 >= 0) {
     M5Dial.Display.setCursor(hori[1], vert[1]+5);
     M5Dial.Display.print(part1.c_str());
     M5Dial.Display.setCursor(hori[1], vert[2]);
     M5Dial.Display.print(part2.c_str());
-  }
-  else
-  {
+  } else {
     M5Dial.Display.setCursor(hori[1], vert[1]+5);
     M5Dial.Display.print(copiedString.c_str());
   }
   if (ck_touch()) return;
   delay(disp_data_delay);
-  if (TimeToChangeZone)
-    return;
+  if (TimeToChangeZone) return;
   // =========== 2nd view =================
- if (ck_Btn())
-    return;
+ if (ck_Btn()) return;
 
   M5.Display.clear(BLACK);
   M5Dial.Display.setTextColor(DISP_FG, DISP_BG);
@@ -510,11 +465,9 @@ if (ck_touch())
   M5Dial.Display.print(&my_timeinfo, "%Z %z");
   if (ck_touch()) return;
   delay(disp_data_delay);
-  if (TimeToChangeZone)
-    return;
+  if (TimeToChangeZone) return;
   // =========== 3rd view =================
- if (ck_Btn())
-    return;
+ if (ck_Btn()) return;
 
   M5.Display.clear(BLACK);
   M5Dial.Display.setTextColor(DISP_FG, DISP_BG);
@@ -526,11 +479,9 @@ if (ck_touch())
   M5Dial.Display.print(&my_timeinfo, "%Y");
   if (ck_touch()) return;
   delay(disp_data_delay);
-  if (TimeToChangeZone)
-    return;
+  if (TimeToChangeZone) return;
    // =========== 4th view =================
-   if (ck_Btn())
-    return;
+   if (ck_Btn()) return;
 
   M5.Display.clear(BLACK);
   M5Dial.Display.setTextColor(DISP_FG, DISP_BG);
@@ -538,8 +489,7 @@ if (ck_touch())
   M5Dial.Display.print(&my_timeinfo, "%H:%M:%S");
   M5Dial.Display.setCursor(hori[1], vert[2]);
 
-  if (index2 >= 0)
-  {
+  if (index2 >= 0) {
     M5Dial.Display.printf("in %s\n", part4.c_str());
     // std::cout << *TAG << "part4 = " << part4.c_str() << ", index2 = " << index2 << std::endl;
   }
@@ -550,8 +500,7 @@ if (ck_touch())
   delay(disp_data_delay);
 }
 
-void disp_msg(String str)
-{
+void disp_msg(String str) {
   M5Dial.Display.fillScreen(TFT_BLACK);
   M5Dial.Display.setBrightness(200);  // Make more brightness than normal
   M5Dial.Display.clear();
@@ -566,8 +515,7 @@ void disp_msg(String str)
   M5Dial.Display.clear();
 }
 
-bool connect_WiFi(void)
-{
+bool connect_WiFi(void) {
   static constexpr const char txt1[] PROGMEM = "connect_WiFi(): ";
   std::shared_ptr<std::string> TAG = std::make_shared<std::string>(txt1);
   bool ret = false;
@@ -576,34 +524,29 @@ bool connect_WiFi(void)
   for (int i = 20; i && WiFi.status() != WL_CONNECTED; --i)
     delay(500);
   
-  if (WiFi.status() == WL_CONNECTED) 
-  {
+  if (WiFi.status() == WL_CONNECTED) {
     ret = true;
     static constexpr const char txt3[] PROGMEM = "\r\nWiFi Connected";
     std::cout << txt3 << std::endl;
   }
-  else
-  {
+  else {
     static constexpr const char txt6[] PROGMEM = "WiFi connection failed.";
     std::cout << "\r\n" << txt6 << std::endl;
   }
   return ret;
 }
 
-bool ck_Btn()
-{
+bool ck_Btn() {
   M5Dial.update();
   //if (M5Dial.BtnA.isPressed())
-  if (M5Dial.BtnA.wasPressed())  // 100 mSecs
-  {
+  if (M5Dial.BtnA.wasPressed()) { // 100 mSecs
     buttonPressed = true;
     return true;
   }
   return false;
 }
 
-bool ck_touch(void)
-{
+bool ck_touch(void) {
   // std::shared_ptr<std::string> TAG = std::make_shared<std::string>("ck_touch(): ");
   bool ret = false;
 
@@ -615,8 +558,7 @@ bool ck_touch(void)
   if (currentTouchState != lastTouchState)
     lastDebounceTime = millis();
 
-  if ((millis() - lastDebounceTime) > debounceDelay)
-  {
+  if ((millis() - lastDebounceTime) > debounceDelay) {
     if (currentTouchState != touchState)
     {
       touchState = currentTouchState;
@@ -643,8 +585,7 @@ std::string intToHex(int value) {
     return ss.str();
 }
 
-bool ck_RFID(void)
-{
+bool ck_RFID(void) {
   static constexpr const char txt1[] PROGMEM = "ck_RFID(): ";
   std::shared_ptr<std::string> TAG = std::make_shared<std::string>(txt1);
   bool lCardIsOK = false;
@@ -652,15 +593,13 @@ bool ck_RFID(void)
   M5Dial.Rfid.begin();
   delay(1000);
   if (M5Dial.Rfid.PICC_IsNewCardPresent() &&
-      M5Dial.Rfid.PICC_ReadCardSerial()) 
-  {
+      M5Dial.Rfid.PICC_ReadCardSerial()) {
     M5Dial.Display.clear();
     uint8_t piccType = M5Dial.Rfid.PICC_GetType(M5Dial.Rfid.uid.sak);
     // Check is the PICC of Classic MIFARE type
     if (piccType != MFRC522::PICC_TYPE_MIFARE_MINI &&
           piccType != MFRC522::PICC_TYPE_MIFARE_1K &&
-          piccType != MFRC522::PICC_TYPE_MIFARE_4K)
-    {
+          piccType != MFRC522::PICC_TYPE_MIFARE_4K) {
       static constexpr const char txt5[] PROGMEM = "Your tag is not of type MIFARE Classic.";
       std::cout << *TAG << txt5 << std::endl;
       M5Dial.Display.fillScreen(TFT_BLACK);
@@ -678,18 +617,15 @@ bool ck_RFID(void)
     std::string sMyRFID(MY_RFID_TAG_HEX);
     int le = sMyRFID.length();
 
-    for (byte i = 0; i < M5Dial.Rfid.uid.size; i++) // Output the stored UID data.
-    {  
+    for (byte i = 0; i < M5Dial.Rfid.uid.size; i++) {    // Output the stored UID data.
       std::string hexString1 = intToHex(M5Dial.Rfid.uid.uidByte[i]);
       uid += hexString1;
     }
     bool lCkEq = true;
 
     /* Check if the presented RFID card has the same ID as that of the ID in secret.h */
-    for (int i = 0; i < le; i++)
-    {
-      if (uid[i] != sMyRFID[i])
-      {
+    for (int i = 0; i < le; i++) {
+      if (uid[i] != sMyRFID[i]) {
         lCkEq = false; // RFID Card not OK
         break;
       }
@@ -741,8 +677,7 @@ void start_scrn(void) {
   //M5Dial.Display.setFont(&fonts::FreeSans12pt7b); // was: efontCN_14);
 }
 
-void send_cmd_to_AtomEcho(void)
-{
+void send_cmd_to_AtomEcho(void) {
     digitalWrite(PORT_B_GROVE_IN_PIN, LOW);
     digitalWrite(PORT_B_GROVE_OUT_PIN, HIGH);
     delay(100);
@@ -750,8 +685,7 @@ void send_cmd_to_AtomEcho(void)
     delay(100); 
 }
 
-void setup(void) 
-{
+void setup(void) {
   static constexpr const char txt1[] PROGMEM = "setup(): ";
   std::shared_ptr<std::string> TAG = std::make_shared<std::string>(txt1);
   M5.begin();  
@@ -795,8 +729,7 @@ void setup(void)
   delay(1000);
 
   /* Try to establish WiFi connection. If so, Initialize NTP, */
-  if (connect_WiFi())
-  {
+  if (connect_WiFi()) {
     /*
     * See: https://docs.espressif.com/projects/esp-idf/en/v5.0.2/esp32/api-reference/system/system_time.html#sntp-time-synchronization
       See also: https://docs.espressif.com/projects/esp-idf/en/v5.0.2/esp32/api-reference/kconfig.html#config-lwip-sntp-update-delay
@@ -827,16 +760,13 @@ void setup(void)
 
     zone_idx = 0; // needed to set here. Is needed in setTimezone()
     setTimezone();
-  }
-  else
-  {
+  } else {
     connect_try++;
   }
   M5.Display.clear(BLACK);
 }
 
-void loop(void)
-{
+void loop(void) {
   static constexpr const char txt1[] PROGMEM = "loop(): ";
   std::shared_ptr<std::string> TAG = std::make_shared<std::string>(txt1);
   unsigned long interval_t = 5 * 60 * 1000; // 5 minutes
@@ -863,44 +793,33 @@ void loop(void)
 
   static constexpr const char txt2[] PROGMEM = "global flag use_rfid = ";
   std::cout << *TAG << txt2 << ((use_rfid == true) ? t_txt : f_txt) << std::endl;
-  while (true)
-  {
-    if (use_rfid)
-    { 
+  while (true) {
+    if (use_rfid) { 
       lCkRFID = ck_RFID();
-      if (lCkRFID)
-      {
+      if (lCkRFID) {
         touch_cnt++;
       }
-    }
-    else
-    {
+    } else {
       dummy = ck_touch();
     }
   
-    if (touch_cnt > 0)
-    {
+    if (touch_cnt > 0) {
       touch_cnt = 0; // reset
 
       display_on = (display_on == true) ? false : true; // flip the display_on flag
 
-      if (use_rfid)
-      {
+      if (use_rfid) {
         static constexpr const char txt3[] PROGMEM = "Switching display ";
         std::cout << *TAG << txt3 << ((display_on == true) ? on_txt : off_txt) << std::endl;
-      }
-      else
-      {
+      } else {
         static constexpr const char txt4[] PROGMEM = "touch_cnt = ";
         static constexpr const char txt5[] PROGMEM = "Display touched. Switching display ";
         std::cout << std::endl << *TAG << txt4 << std::to_string(touch_cnt) << std::endl;
         std::cout << *TAG << txt5 << ((display_on == true) ? on_txt : off_txt) << std::endl;
       }
 
-      if (display_on)
-      {
-        if (i_am_asleep)
-        {
+      if (display_on) {
+        if (i_am_asleep) {
           // See: https://github.com/m5stack/m5-docs/blob/master/docs/en/api/lcd.md
           M5.Display.wakeup();
           i_am_asleep = false;
@@ -914,11 +833,8 @@ void loop(void)
           M5Dial.Display.setTextColor(DISP_FG, DISP_BG);
           M5.Display.clear(BLACK);
         }
-      }
-      else
-      {
-        if (!i_am_asleep)
-        {
+      } else {
+        if (!i_am_asleep) {
           // See: https://github.com/m5stack/m5-docs/blob/master/docs/en/api/lcd.md
           // M5Dial.Power.powerOff(); // shutdown
           static constexpr const char txt8[] PROGMEM = "Going asleep!";
@@ -934,17 +850,14 @@ void loop(void)
       }
     }
 
-    if (!ck_Btn())
-    {
-      if (WiFi.status() != WL_CONNECTED) // Check if we're still connected to WiFi
-      {
+    if (!ck_Btn()) {
+      if (WiFi.status() != WL_CONNECTED) { // Check if we're still connected to WiFi
         if (connect_WiFi())
           connect_try = 0;  // reset count
         else
           connect_try++;
 
-        if (connect_try >= max_connect_try)
-        {
+        if (connect_try >= max_connect_try) {
           static constexpr const char txt10[] PROGMEM = "WiFi connect try failed ";
           static constexpr const char txt11[] PROGMEM = "times.\nGoing into infinite loop....\n";
           std::cout << std::endl << *TAG << txt10 << (connect_try) << txt11 << std::endl;
@@ -952,18 +865,14 @@ void loop(void)
         }
       }
 
-      if (sync_time || lStart) // || (elapsed_t >= interval_t))
-      {
-        if (sync_time)
-        {
-          if (initTime())
-          {
+      if (sync_time || lStart) {  // || (elapsed_t >= interval_t))
+        if (sync_time) {
+          if (initTime()) {
             time_t t = time(NULL);
             static constexpr const char txt12[] PROGMEM = "time synchronized at time (UTC): ";
             std::cout << *TAG << txt12 << asctime(gmtime(&t)) << std::flush;  // prevent a 2nd LF. Do not use std::endl
 
-            if (set_RTC())
-            {
+            if (set_RTC()) {
               static constexpr const char txt13[] PROGMEM = "external RTC updated from NTP server datetime stamp";
               std::cout << *TAG << txt13 << std::endl;
             }
@@ -977,10 +886,8 @@ void loop(void)
       zone_chg_elapsed_t = zone_chg_curr_t - zone_chg_start_t;
 
       /* Do a zone change */
-      if ( lStart || (zone_chg_elapsed_t >= zone_chg_interval_t) )
-      {
-        if (lStart)
-        {
+      if ( lStart || (zone_chg_elapsed_t >= zone_chg_interval_t) ) {
+        if (lStart) {
           zone_idx = -1; // will be increased in code below
           //lStart = false;
         }
@@ -1002,14 +909,12 @@ void loop(void)
         setTimezone();
         TimeToChangeZone = false;
         printLocalTime();
-        if (display_on)
-        {
+        if (display_on) {
           disp_data();
         }
       }
     }
-    if (buttonPressed)
-    {
+    if (buttonPressed) {
       // We have a button press so do a software reset
       static constexpr const char txt15[] PROGMEM = "Button was pressed.\n";
       static constexpr const char txt16[] PROGMEM = "Going to do a software reset...\n";
@@ -1020,8 +925,7 @@ void loop(void)
       //delay(3000);
       esp_restart();
     }
-    if (display_on)
-    {
+    if (display_on) {
       // printLocalTime();
       disp_data();
       //delay(1000);  // Wait 1 second
@@ -1034,8 +938,7 @@ void loop(void)
   std::cout << *TAG << txt18 << std::endl << std::endl;
   //M5Dial.update();
   /* Go into an endless loop after WiFi doesn't work */
-  do
-  {
+  do {
     delay(5000);
   } while (true);
 }
