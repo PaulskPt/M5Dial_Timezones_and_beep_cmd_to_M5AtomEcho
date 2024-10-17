@@ -137,7 +137,7 @@ If sound is ON (default), the RGB Led will show RED color.
 
 2025-10-14: Version 2 for M5Dial: I had to delete a lot of ```if (my_debug)``` blocks and use other measures regarding definitions of certain variables containing texts to get rid of a ```memory full``` error while compiling the sketch. After these measures the memory is occupied for 97 percent. The sketch compiles OK.
 
-2024-10-17: Version 2 for M5Dial: in function ```time_sync_notification_cb()``` changed the code a lot to make certain that the function initTime() gets called only once at the moment of a NTP synchronization.
+2024-10-17: Version 2 for M5Dial: in function ```time_sync_notification_cb()``` changed the code a lot to make certain that the function initTime() gets called only once at the moment of a SNTP synchronization.
 
 Docs:
 
