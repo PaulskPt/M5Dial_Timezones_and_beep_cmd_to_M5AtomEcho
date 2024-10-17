@@ -1,0 +1,85 @@
+2024-10-17 19h17 utc+1
+
+
+Board: M5Stack M5Dial with connected to M5Atom Echo.
+
+Arduino IDE v2.3.3
+
+Sketch: M5Dial_Timezones_and_M5Echo_RFID_ver_2024-10-14_18h56.ino
+
+Note: functions time_sync_notification_cb() changed to control better when initTime has to be called.
+
+
+-----------------------------------------------------------------------
+
+
+Monitor output (partially):
+
+
+19:17:21.903 -> loop(): Button was pressed.
+19:17:21.903 -> Going to do a software reset...
+19:17:21.903 -> 
+19:17:27.957 -> ESP-ROM:esp32s3-20210327
+19:17:27.993 -> Build:Mar 27 2021
+19:17:27.993 -> rst:0xc (RTC_SW_CPU_RST),boot:0xb (SPI_FAST_FLASH_BOOT)
+19:17:27.993 -> Saved PC:0x4037afa2
+19:17:27.993 -> SPIWP:0xee
+19:17:27.993 -> mode:DIO, clock div:1
+19:17:27.993 -> load:0x3fce3818,len:0x109c
+19:17:27.993 -> load:0x403c9700,len:0x4
+19:17:27.993 -> load:0x403c9704,len:0xb50
+19:17:27.993 -> load:0x403cc700,len:0x2fe4
+19:17:27.993 -> entry 0x403c98ac
+19:17:28.432 -> 
+19:17:28.432 -> 
+19:17:28.432 -> setup(): M5Stack M5Dial Timezones and M5Atom Echo with RFID test.
+19:17:28.432 -> setup(): setting display brightness to 50 (range 0-255)
+19:17:32.534 -> 
+
+19:17:32.534 -> WiFi Connected
+19:17:32.534 -> sntp_initialize(): sntp polling interval (readback from NTP server): 5 Minute(s)  <<<=== should be 15 minutes
+19:17:32.534 -> setup(): sntp sync status = 0
+19:17:33.505 -> loop(): global flag use_rfid = True
+19:17:34.092 -> time_sync_notification_cb(): Current GMT Time: Thu Oct 17 18:17:36 2024
+19:17:34.592 -> ntp_sync_notification_txt(): Sending beep command to the M5 Atom Echo device
+19:17:34.624 -> initTime(): NTP Connected. 
+19:17:35.654 -> loop(): time synchronized at time (UTC): Thu Oct 17 18:17:37 2024
+19:17:35.654 -> loop(): external RTC updated from NTP server 
+
+
+
+19:22:35.185 -> time_sync_notification_cb(): Current GMT Time: Thu Oct 17 18:22:37 2024   <<<=== NTP sync after 5 minutes !
+19:22:35.696 -> ntp_sync_notification_txt(): Sending beep command to the M5 Atom Echo device
+19:22:40.314 -> initTime(): NTP Connected. 
+19:22:41.286 -> loop(): time synchronized at time (UTC): Thu Oct 17 18:22:43 2024
+19:22:41.328 -> loop(): external RTC updated from NTP server datetime stamp
+19:22:42.263 -> time_sync_notification_cb(): Current GMT Time: Thu Oct 17 18:22:44 2024
+
+-----------------------------------------------------------------------------------
+SNTP interval now set to 15 minutes. Answer received from SNTP server: 15 minutes:
+-----------------------------------------------------------------------------------
+
+
+19:47:31.906 -> WiFi Connected
+19:47:31.906 -> sntp_initialize(): sntp polling interval (readback from NTP server): 15 Minute(s)
+19:47:31.906 -> setup(): sntp sync status = 0
+19:47:32.921 -> loop(): global flag use_rfid = True
+19:47:34.028 -> 
+19:47:34.028 -> loop(): new zone_idx = 0
+19:47:34.387 -> time_sync_notification_cb(): Current GMT Time: Thu Oct 17 18:47:36 2024
+19:47:34.872 -> ntp_sync_notification_txt(): Sending beep command to the M5 Atom Echo device
+19:47:35.043 -> printLocalTime(): Timezone: America/Kentucky/Louisville, datetime: 2024-10-17 14:47:37
+19:47:36.149 -> initTime(): NTP Connected. 
+19:47:37.150 -> loop(): time synchronized at time (UTC): Thu Oct 17 18:47:39 2024  <<<=== 1st NTP sync
+19:47:37.150 -> loop(): external RTC updated from NTP server datetime stamp
+19:47:40.876 -> time_sync_notification_cb(): Current GMT Time: Thu Oct 17 18:47:42 2024
+
+
+20:02:40.972 -> time_sync_notification_cb(): Current GMT Time: Thu Oct 17 19:02:43 2024
+20:02:41.456 -> ntp_sync_notification_txt(): Sending beep command to the M5 Atom Echo device
+20:02:41.958 -> printLocalTime(): Timezone: America/Kentucky/Louisville, datetime: 2024-10-17 15:02:44
+20:02:43.047 -> initTime(): NTP Connected. 
+20:02:44.089 -> loop(): time synchronized at time (UTC): Thu Oct 17 19:02:46 2024  <<<=== 2nd NTP sync (after 15 minutes)
+20:02:44.089 -> loop(): external RTC updated from NTP server datetime stamp
+20:02:46.683 -> time_sync_notification_cb(): Current GMT Time: Thu Oct 17 19:02:48 2024
+
