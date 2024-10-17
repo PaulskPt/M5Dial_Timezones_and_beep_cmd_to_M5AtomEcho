@@ -63,7 +63,7 @@ The sketch will connect to a NTP server of your choice. In this version the sket
 The following define sets the NTP polling interval time:
 
 ```
-60 #define CONFIG_LWIP_SNTP_UPDATE_DELAY  15 * 60 * 1000 // = 15 minutes
+64 #define CONFIG_LWIP_SNTP_UPDATE_DELAY  15 * 60 * 1000 // = 15 minutes
 ```
 
 At the moment of a NTP Time Synchronization, the text "TS" will be shown in the middle of the toprow of the display.
@@ -135,6 +135,7 @@ If sound is ON (default), the RGB Led will show RED color.
 
 2025-10-14: Version 2 for M5Dial: I had to delete a lot of ```if (my_debug)``` blocks and use other measures regarding definitions of certain variables containing texts to get rid of a ```memory full``` error while compiling the sketch. After these measures the memory is occupied for 97 percent. The sketch compiles OK.
 
+2024-10-17: Version 2 for M5Dial: in function ```time_sync_notification_cb()``` changed the code a lot to make certain that the function initTime() gets called only once at the moment of a NTP synchronization.
 
 Docs:
 
