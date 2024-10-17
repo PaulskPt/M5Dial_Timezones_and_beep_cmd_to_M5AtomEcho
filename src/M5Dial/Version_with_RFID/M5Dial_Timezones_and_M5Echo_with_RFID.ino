@@ -61,7 +61,9 @@
 #undef CONFIG_LWIP_SNTP_UPDATE_DELAY
 #endif
 
-uint32_t CONFIG_LWIP_SNTP_UPDATE_DELAY = 15 * 60 * 1000; // = 5 minutes in milliseconds (15 seconds is the minimum). Original setting: 300000  // 1 hour
+// Interval set to: 900000 mSec = 15 minutes in milliseconds (15 seconds is the minimum),
+// See: https://github.com/espressif/esp-idf/blob/master/components/lwip/apps/sntp/sntp.c
+uint32_t CONFIG_LWIP_SNTP_UPDATE_DELAY = 15 * 60 * 1000; 
 uint32_t CONFIG_LWIP_SNTP_UPDATE_DELAY_IN_SECONDS = CONFIG_LWIP_SNTP_UPDATE_DELAY / 1000;
 uint16_t CONFIG_LWIP_SNTP_UPDATE_DELAY_IN_MINUTES = CONFIG_LWIP_SNTP_UPDATE_DELAY_IN_SECONDS / 60;  // Shoud be 15 minutes
 // 4-PIN connector type HY2.0-4P
@@ -884,15 +886,15 @@ void loop(void)
 
       if (use_rfid)
       {
-        static constexpr const char txt4[] PROGMEM = "Switching display ";
-        std::cout << *TAG << txt4 << ((display_on == true) ? on_txt : off_txt) << std::endl;
+        static constexpr const char txt3[] PROGMEM = "Switching display ";
+        std::cout << *TAG << txt3 << ((display_on == true) ? on_txt : off_txt) << std::endl;
       }
       else
       {
-        static constexpr const char txt5[] PROGMEM = "touch_cnt = ";
-        static constexpr const char txt6[] PROGMEM = "Display touched. Switching display ";
-        std::cout << std::endl << *TAG << txt5 << std::to_string(touch_cnt) << std::endl;
-        std::cout << *TAG << txt6 << ((display_on == true) ? on_txt : off_txt) << std::endl;
+        static constexpr const char txt4[] PROGMEM = "touch_cnt = ";
+        static constexpr const char txt5[] PROGMEM = "Display touched. Switching display ";
+        std::cout << std::endl << *TAG << txt4 << std::to_string(touch_cnt) << std::endl;
+        std::cout << *TAG << txt5 << ((display_on == true) ? on_txt : off_txt) << std::endl;
       }
 
       if (display_on)
@@ -903,12 +905,12 @@ void loop(void)
           M5.Display.wakeup();
           i_am_asleep = false;
           M5.Display.setBrightness(disp_brightness);  // 0 - 255
-          static constexpr const char txt7[] PROGMEM = "Waking up!";
-          static constexpr const char txt8[] PROGMEM = " At (UTC): ";
-          disp_msg(txt7);
+          static constexpr const char txt6[] PROGMEM = "Waking up!";
+          static constexpr const char txt7[] PROGMEM = " At (UTC): ";
+          disp_msg(txt6);
           t = time(NULL);
 
-          std::cout << *TAG << txt7 << txt8 << asctime(gmtime(&t)) << std::endl;
+          std::cout << *TAG << txt6 << txt7 << asctime(gmtime(&t)) << std::endl;
           M5Dial.Display.setTextColor(DISP_FG, DISP_BG);
           M5.Display.clear(BLACK);
         }
@@ -919,11 +921,11 @@ void loop(void)
         {
           // See: https://github.com/m5stack/m5-docs/blob/master/docs/en/api/lcd.md
           // M5Dial.Power.powerOff(); // shutdown
-          static constexpr const char txt9[] PROGMEM = "Going asleep!";
-          static constexpr const char txt10[] PROGMEM = " At (UTC): ";
+          static constexpr const char txt8[] PROGMEM = "Going asleep!";
+          static constexpr const char txt9[] PROGMEM = " At (UTC): ";
           disp_msg(txt9);
           t = time(NULL);
-          std::cout << *TAG << txt9 << txt10 << asctime(gmtime(&t)) << std::endl;
+          std::cout << *TAG << txt8 << txt9 << asctime(gmtime(&t)) << std::endl;
           M5.Display.sleep();
           i_am_asleep = true;
           M5.Display.setBrightness(0);
@@ -943,9 +945,9 @@ void loop(void)
 
         if (connect_try >= max_connect_try)
         {
-          static constexpr const char txt3[] PROGMEM = "WiFi connect try failed ";
-          static constexpr const char txt4[] PROGMEM = "times.\nGoing into infinite loop....\n";
-          std::cout << std::endl << *TAG << txt3 << (connect_try) << txt4 << std::endl;
+          static constexpr const char txt10[] PROGMEM = "WiFi connect try failed ";
+          static constexpr const char txt11[] PROGMEM = "times.\nGoing into infinite loop....\n";
+          std::cout << std::endl << *TAG << txt10 << (connect_try) << txt11 << std::endl;
           break;
         }
       }
@@ -957,13 +959,13 @@ void loop(void)
           if (initTime())
           {
             time_t t = time(NULL);
-            static constexpr const char txt3[] PROGMEM = "time synchronized at time (UTC): ";
-            std::cout << *TAG << txt3 << asctime(gmtime(&t)) << std::flush;  // prevent a 2nd LF. Do not use std::endl
+            static constexpr const char txt12[] PROGMEM = "time synchronized at time (UTC): ";
+            std::cout << *TAG << txt12 << asctime(gmtime(&t)) << std::flush;  // prevent a 2nd LF. Do not use std::endl
 
             if (set_RTC())
             {
-              static constexpr const char txt2[] PROGMEM = "external RTC updated from NTP server datetime stamp";
-              std::cout << *TAG << txt2 << std::endl;
+              static constexpr const char txt13[] PROGMEM = "external RTC updated from NTP server datetime stamp";
+              std::cout << *TAG << txt13 << std::endl;
             }
           }
           sync_time = false;
@@ -994,7 +996,8 @@ void loop(void)
           zone_idx = 0;
         if (zone_idx == 0)
           std::cout << std::endl; // blank line
-        std::cout << *TAG << "new zone_idx = " << zone_idx << std::endl;
+        static constexpr const char txt14[] PROGMEM = "new zone_idx = ";
+        std::cout << *TAG << txt14 << zone_idx << std::endl;
 
         setTimezone();
         TimeToChangeZone = false;
@@ -1008,12 +1011,12 @@ void loop(void)
     if (buttonPressed)
     {
       // We have a button press so do a software reset
-      static constexpr const char txt17[] PROGMEM = "Button was pressed.\n";
-      static constexpr const char txt18[] PROGMEM = "Going to do a software reset...\n";
-      static constexpr const char txt19[] PROGMEM = "Reset...";
-      std::cout << *TAG << txt17 << 
-        txt18 << std::endl;
-      disp_msg(txt19); // there is already a wait of 6000 in disp_msg()
+      static constexpr const char txt15[] PROGMEM = "Button was pressed.\n";
+      static constexpr const char txt16[] PROGMEM = "Going to do a software reset...\n";
+      static constexpr const char txt17[] PROGMEM = "Reset...";
+      std::cout << *TAG << txt15 << 
+        txt16 << std::endl;
+      disp_msg(txt17); // there is already a wait of 6000 in disp_msg()
       //delay(3000);
       esp_restart();
     }
@@ -1026,9 +1029,9 @@ void loop(void)
     lStart = false;
     M5Dial.update(); // read btn state etc.
   }
-  static constexpr const char txt20[] PROGMEM = "Bye...";
-  disp_msg(txt20);
-  std::cout << *TAG << txt20 << std::endl << std::endl;
+  static constexpr const char txt18[] PROGMEM = "Bye...";
+  disp_msg(txt18);
+  std::cout << *TAG << txt18 << std::endl << std::endl;
   //M5Dial.update();
   /* Go into an endless loop after WiFi doesn't work */
   do
