@@ -923,7 +923,7 @@ void loop(void)
           // M5Dial.Power.powerOff(); // shutdown
           static constexpr const char txt8[] PROGMEM = "Going asleep!";
           static constexpr const char txt9[] PROGMEM = " At (UTC): ";
-          disp_msg(txt9);
+          disp_msg(txt8);
           t = time(NULL);
           std::cout << *TAG << txt8 << txt9 << asctime(gmtime(&t)) << std::endl;
           M5.Display.sleep();
