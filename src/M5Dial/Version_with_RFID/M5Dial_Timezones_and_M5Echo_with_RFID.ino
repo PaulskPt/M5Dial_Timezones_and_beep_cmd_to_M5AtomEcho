@@ -9,7 +9,7 @@
 *
 *  Example:
 *  https://randomnerdtutorials.com/esp32-ntp-timezones-daylight-saving/
-   #:~:text=configTzTime(%E2%80%9CCET-1CEST,M3.5.0/03,M10.5.0/03%E2%80%9D,%20ntp.c_str());%20then%20it%20works%20perfect
+
 *
 *  Update 2024-10-11: added functionality to use RFID card to put asleep or awake the display.
 *  This functionality depends on the state of the global variable: use_rfid.
@@ -19,8 +19,9 @@
 *  Update: 2024-10-14. To prevent 100% memory usage: deleted a few functions. Deleted a lot of if(my_debug) conditional prints with a lot of text.
 *  Assigned more variables as static procexpr const PROGMEM.
 *
-*  Update: 2025-10-15: Moved all zone definitions to secret.h. Deleted function: void map_replace_first_zone(void).
+*  Update: 2024-10-15: Moved all zone definitions to secret.h. Deleted function: void map_replace_first_zone(void).
 *          Changed function create_maps(). This function now imports all zone and zone_code definitions into a map.
+*  Update: 2024-10-17: Improved code in function tim_notification_cb(). Also added preprocessor directive: #define DEBUG_OUTPUT 0 // Off.
 */
 
 #include <M5Dial.h>
@@ -31,7 +32,8 @@
 #include <WiFi.h>
 #include <TimeLib.h>
 #include <stdlib.h>   // for putenv
-#include <time.h>
+#include <sys/time.h>
+//#include <time.h>
 #include <DateTime.h> // See: /Arduino/libraries/ESPDateTime/src
 #include "secret.h"
 // Following 8 includes needed for creating, changing and using map time_zones
@@ -41,10 +43,13 @@
 #include <array>
 #include <string>
 #include <tuple>
-#include <iomanip> // For setFill and setW
+#include <iomanip>  // For setFill and setW
 #include <sstream>  // Used in ck_RFID()
+#include <ctime>    // Used in time_sync_notification_cb()
 
 //namespace {  // anonymous namespace (also known as an unnamed namespace)
+
+#define DEBUG_OUTPUT 0 // Off
 
 #define WIFI_SSID     SECRET_SSID // "YOUR WIFI SSID NAME"
 #define WIFI_PASSWORD SECRET_PASS //"YOUR WIFI PASSWORD"
@@ -57,8 +62,9 @@
 #undef CONFIG_LWIP_SNTP_UPDATE_DELAY
 #endif
 
-#define CONFIG_LWIP_SNTP_UPDATE_DELAY  15 * 60 * 1000 // = 15 minutes (15 seconds is the minimum). Original setting: 3600000  // 1 hour
-
+uint32_t CONFIG_LWIP_SNTP_UPDATE_DELAY = 5 * 60 * 1000; // = 5 minutes in milliseconds (15 seconds is the minimum). Original setting: 300000  // 1 hour
+uint32_t CONFIG_LWIP_SNTP_UPDATE_DELAY_IN_SECONDS = CONFIG_LWIP_SNTP_UPDATE_DELAY / 1000;
+uint16_t CONFIG_LWIP_SNTP_UPDATE_DELAY_IN_MINUTES = CONFIG_LWIP_SNTP_UPDATE_DELAY_IN_SECONDS / 60;  // Shoud be 5 minutes
 // 4-PIN connector type HY2.0-4P
 #define PORT_B_GROVE_OUT_PIN 2
 #define PORT_B_GROVE_IN_PIN  1
@@ -75,7 +81,10 @@ std::string elem_zone_code;
 std::string elem_zone_code_old;
 bool zone_has_changed = false;
 
-bool my_debug = false;
+bool lStart = true;
+bool sync_time = false;
+time_t time_sync_epoch_at_start = 0;
+time_t last_time_sync_epoch = 0; // see: time_sync_notification_cb()
 /* use_rfid flag:
 *  if true: use RFID card to put asleep/awake the display. 
 *  if false: use touches  to put asleep/awake the display.
@@ -162,8 +171,9 @@ void ntp_sync_notification_txt(bool show)
 {
   if (show)
   {
-    std::shared_ptr<std::string> TAG = std::make_shared<std::string>("mtp_sync_notification_txt(): ");
-    static constexpr const char txt[] PROGMEM = "beep command to the M5 Atom Echo device";
+    static constexpr const char txt1[] PROGMEM = "ntp_sync_notification_txt(): ";
+    std::shared_ptr<std::string> TAG = std::make_shared<std::string>(txt1);
+    static constexpr const char txt2[] PROGMEM = "beep command to the M5 Atom Echo device";
     M5Dial.Display.setCursor(dw/2-25, 20);
     M5Dial.Display.setTextColor(GREEN, BLACK);
     M5Dial.Display.print("TS");
@@ -181,13 +191,13 @@ void ntp_sync_notification_txt(bool show)
 
     if (display_on)
     {
-      std::cout << *TAG << "Sending " << (txt) << std::endl;
+      std::cout << *TAG << "Sending " << (txt2) << std::endl;
       send_cmd_to_AtomEcho(); // Send a digital signal to the Atom Echo to produce a beep
     }
     else
     {
-      static constexpr const char txt2[] PROGMEM = "Display is Off. Not sending ";
-      std::cout << *TAG << txt2 << (txt) << std::endl;
+      static constexpr const char txt3[] PROGMEM = "Display is Off. Not sending ";
+      std::cout << *TAG << txt3 << (txt2) << std::endl;
     }
   }
   else
@@ -197,32 +207,101 @@ void ntp_sync_notification_txt(bool show)
   }
 }
 
-void time_sync_notification_cb(struct timeval *tv)
+ /*
+  time_t now = tv->tv_sec;  // Convert timeval to time_t
+  static constexpr const char txt2[] PROGMEM = "Current GMT time derived from ( tv->tv.sec ): ";
+  struct std::tm * ptm = std::gmtime(&now);
+  std::cout << *TAG << txt2 << std::put_time(ptm,"%c") << std::endl;
+  time_t curr_time_sync_epoch = mktime(ptm);
+  */
+
+/* Code by MS CoPilot */
+// The sntp callback function
+void time_sync_notification_cb(struct timeval *tv) 
 {
   static constexpr const char txt1[] PROGMEM = "time_sync_notification_cb(): ";
   std::shared_ptr<std::string> TAG = std::make_shared<std::string>(txt1);
 
-  if (initTime())
+  // Get the current time  (very important!)
+  time_t currentTime = time(nullptr);
+  // Convert time_t to GMT struct tm
+  struct tm* gmtTime = gmtime(&currentTime);
+  uint16_t diff_t;
+
+#if DEBUG_OUTPUT
+  // Added by @PaulskPt. I want to see the state of global var lStart!
+  static constexpr const char txt2[] PROGMEM = "lStart = ";
+  std::cout << *TAG << txt2 << lStart << std::endl;
+
+  static constexpr const char txt3[] PROGMEM = "Current time_t: ";
+  std::cout << *TAG << txt3 << currentTime << std::endl;
+#endif
+  // Added by @PaulskPt. I want to see GMT time in this moment!
+  static constexpr const char txt4[] PROGMEM = "Current GMT Time: ";
+  std::cout << *TAG << txt4 << asctime(gmtTime);
+  // ... end of addition by @PaulskPt
+
+  // Set the starting epoch time if not set, only when lStart is true
+  if (lStart && (time_sync_epoch_at_start == 0) && (currentTime > 0))
   {
-    time_t t = time(NULL);
-    static constexpr const char txt5[] PROGMEM = "time synchronized at time (UTC): ";
-    std::cout << *TAG << txt5 << asctime(gmtime(&t)) << std::flush;  // prevent a 2nd LF. Do not use std::endl
-    ntp_sync_notification_txt(true);
+    time_sync_epoch_at_start = currentTime;  // Set only once!
+  }
+
+  // Set the last sync epoch time if not set
+  if ((last_time_sync_epoch == 0) && (currentTime > 0))
+  {
+    last_time_sync_epoch = currentTime;
+  }
+
+  if (currentTime > 0) 
+  {   
+    // code added by @PaulskPt to test my ideas
+    diff_t = currentTime - last_time_sync_epoch;
+    last_time_sync_epoch = currentTime;
+      
+#if DEBUG_OUTPUT
+    static constexpr const char txt5[]  PROGMEM = "CONFIG_LWIP_SNTP_UPDATE_DELAY_IN_";
+    static constexpr const char txt5a[] PROGMEM = "SECONDS = ";
+    static constexpr const char txt5b[] PROGMEM = "MINUTES = ";
+    std::cout << txt5 << txt5a << std::to_string(CONFIG_LWIP_SNTP_UPDATE_DELAY_IN_SECONDS) << std::endl;
+    std::cout << txt5 << txt5b << std::to_string(CONFIG_LWIP_SNTP_UPDATE_DELAY_IN_MINUTES) << std::endl;
+    static constexpr const char txt6[] PROGMEM = "currentTime";
+    static constexpr const char txt7[] PROGMEM = "last_time_sync_epoch";
+    static constexpr const char txt8[] PROGMEM = "diff_t";
+    std::cout << *TAG << txt6 << " = " << currentTime << ", " << txt7 << " = " << last_time_sync_epoch << std::endl;
+    std::cout << *TAG << txt8 << " = " << diff_t << std::endl;
+#endif
+
+    if ((diff_t >= CONFIG_LWIP_SNTP_UPDATE_DELAY_IN_SECONDS) || lStart)
+    {
+      sync_time = true; // See loop initTime
+      ntp_sync_notification_txt(true);
+    }
+    // end of code added by @PaulskPt
   }
 }
 
-void sntp_initialize() {
+/* ... End of code by MS CoPilot */
+
+void esp_sntp_initialize()
+{
   static constexpr const char txt1[] PROGMEM = "sntp_initialize(): ";
   std::shared_ptr<std::string> TAG = std::make_shared<std::string>(txt1);
-  sntp_setoperatingmode(SNTP_OPMODE_POLL);
-  sntp_setservername(0, NTP_SERVER1);
-  sntp_set_sync_interval(CONFIG_LWIP_SNTP_UPDATE_DELAY);
-  sntp_set_time_sync_notification_cb(time_sync_notification_cb);
-  sntp_init();
-  
-  static constexpr const char txt4[] PROGMEM = "sntp polling interval: ";
+   if (esp_sntp_enabled()) 
+  { 
+    esp_sntp_stop();  // prevent initialization error
+  }
+  esp_sntp_setoperatingmode(SNTP_OPMODE_POLL);
+  esp_sntp_setservername(0, NTP_SERVER1);
+  esp_sntp_set_sync_interval(CONFIG_LWIP_SNTP_UPDATE_DELAY);
+  esp_sntp_set_time_sync_notification_cb(time_sync_notification_cb); // Set the notification callback function
+  esp_sntp_init();
+
+  // check the set sync_interval
+  uint32_t rcvd_sync_interval_secs = esp_sntp_get_sync_interval();
+  static constexpr const char txt4[] PROGMEM = "sntp polling interval (readback from NTP server): ";
   static constexpr const char txt5[] PROGMEM = " Minute(s)";
-  std::cout << *TAG << txt4 << std::to_string(CONFIG_LWIP_SNTP_UPDATE_DELAY/60000) << txt5 << std::endl;
+  std::cout << *TAG << txt4 << std::to_string(rcvd_sync_interval_secs/60000) << txt5 << std::endl;
 }
 
 void setTimezone(void)
@@ -254,14 +333,14 @@ bool initTime(void)
 #define ESP32 (1)
 #endif
 
-std::string my_tz_code = getenv("TZ");
+  std::string my_tz_code = getenv("TZ");
 
 // See: /Arduino/libraries/ESPDateTime/src/DateTime.cpp, lines 76-80
 #if defined(ESP8266)
   configTzTime(elem_zone_code.c_str(), NTP_SERVER1, NTP_SERVER2, NTP_SERVER3); 
 #elif defined(ESP32)
-static constexpr const char txt7[] PROGMEM = "Setting configTzTime to: \"";
-  std::cout << *TAG << txt7 << my_tz_code.c_str() << "\"" << std::endl;
+  //static constexpr const char txt7[] PROGMEM = "Setting configTzTime to: \"";
+  //  std::cout << *TAG << txt7 << my_tz_code.c_str() << "\"" << std::endl;
   //configTime(0, 3600, NTP_SERVER1);
   configTzTime(my_tz_code.c_str(), NTP_SERVER1, NTP_SERVER2, NTP_SERVER3);  // This one is use for the M5Stack Atom Matrix
 #endif
@@ -324,8 +403,8 @@ void printLocalTime()  // "Local" of the current selected timezone!
   }
   static constexpr const char txt3[] PROGMEM = "Timezone: ";
   static constexpr const char txt4[] PROGMEM = ", datetime: ";
+  elem_zone  = std::get<0>(zones_map[zone_idx]);
   std::cout << *TAG << txt3 << elem_zone.c_str() << txt4 << std::put_time(&timeinfo, "%Y-%m-%d %H:%M:%S") << std::endl;
-
 }
 
 /* This function uses global var timeinfo to display date and time data.
@@ -353,6 +432,8 @@ void disp_data(void)
   if (ck_touch())
     return;
   if (ck_Btn())
+    return;
+  if(sync_time)
     return;
 
   if (index3 >= 0)
@@ -455,8 +536,6 @@ if (ck_touch())
   M5Dial.Display.setCursor(hori[1], vert[1]+5);
   M5Dial.Display.print(&my_timeinfo, "%H:%M:%S");
   M5Dial.Display.setCursor(hori[1], vert[2]);
-  
-  ntp_sync_notification_txt(false);
 
   if (index2 >= 0)
   {
@@ -739,9 +818,9 @@ void setup(void)
           } sntp_sync_status_t;
     */
 
-    sntp_initialize();  // name sntp_init() results in compilor error "multiple definitions sntp_init()"
+    esp_sntp_initialize();  // name sntp_init() results in compilor error "multiple definitions sntp_init()"
     //sntp_sync_status_t sntp_sync_status = sntp_get_sync_status();
-    int status = sntp_get_sync_status();
+    int status = esp_sntp_get_sync_status();
     static constexpr const char txt6[] PROGMEM = "sntp sync status = ";
     std::cout << *TAG << txt6 << std::to_string(status) << std::endl;
 
@@ -759,6 +838,9 @@ void loop(void)
 {
   static constexpr const char txt1[] PROGMEM = "loop(): ";
   std::shared_ptr<std::string> TAG = std::make_shared<std::string>(txt1);
+  unsigned long interval_t = 5 * 60 * 1000; // 5 minutes
+  unsigned long curr_t = 0L;
+  unsigned long elapsed_t = 0L;
   unsigned long const zone_chg_interval_t = 25 * 1000L; // 25 seconds
   unsigned long zone_chg_curr_t = 0L;
   unsigned long zone_chg_elapsed_t = 0L;
@@ -773,7 +855,6 @@ void loop(void)
   static constexpr const char times_lst[3][7] = {"dummy", "first", "second"};
   bool dummy = false;
   bool zone_change = false;
-  bool lStart = true;
   bool msgAsleep_shown = false;
   bool msgWakeup_shown = false;
   static constexpr const char disp_off_txt[] PROGMEM = "Switching display off.";
@@ -856,43 +937,52 @@ void loop(void)
     {
       if (WiFi.status() != WL_CONNECTED) // Check if we're still connected to WiFi
       {
-        static constexpr const char txt11[] PROGMEM = "WiFi connection lost. Trying to reconnect...";
-        std::cout << *TAG << txt11 << std::endl;
-        if (!connect_WiFi())  // Try to connect WiFi
+        if (connect_WiFi())
+          connect_try = 0;  // reset count
+        else
           connect_try++;
-        
+
         if (connect_try >= max_connect_try)
         {
-          M5Dial.Display.fillScreen(TFT_BLACK);
-          M5Dial.Display.clear();
-          M5Dial.Display.setTextDatum(middle_center);
-          M5Dial.Display.setTextColor(TFT_RED);
-          static constexpr const char txt12[] PROGMEM = "WiFi fail";
-          static constexpr const char txt13[] PROGMEM = "Exit into";
-          static constexpr const char txt14[] PROGMEM = "infinite loop";
-          static constexpr const char txt15[] PROGMEM = "\nWiFi connect try failed ";
-          static constexpr const char txt16[] PROGMEM = " times. Going into infinite loop...\n";
-          M5Dial.Display.drawString(txt12, M5Dial.Display.width() / 2, M5Dial.Display.height() / 2 - 50);
-          M5Dial.Display.drawString(txt13, M5Dial.Display.width() / 2, M5Dial.Display.height() / 2);
-          M5Dial.Display.drawString(txt14, M5Dial.Display.width() / 2, M5Dial.Display.height() / 2 + 50);
-          std::cout << txt15 << (connect_try) << txt16 << std::endl;
-          delay(6000);
-          break; // exit and go into an endless loop
+          static constexpr const char txt3[] PROGMEM = "WiFi connect try failed ";
+          static constexpr const char txt4[] PROGMEM = "times.\nGoing into infinite loop....\n";
+          std::cout << std::endl << *TAG << txt3 << (connect_try) << txt4 << std::endl;
+          break;
         }
       }
 
+      if (sync_time || lStart) // || (elapsed_t >= interval_t))
+      {
+        if (sync_time)
+        {
+          if (initTime())
+          {
+            time_t t = time(NULL);
+            static constexpr const char txt3[] PROGMEM = "time synchronized at time (UTC): ";
+            std::cout << *TAG << txt3 << asctime(gmtime(&t)) << std::flush;  // prevent a 2nd LF. Do not use std::endl
+
+            if (set_RTC())
+            {
+              static constexpr const char txt2[] PROGMEM = "external RTC updated from NTP server datetime stamp";
+              std::cout << *TAG << txt2 << std::endl;
+            }
+          }
+          sync_time = false;
+        }
+      }
+      
       zone_chg_curr_t = millis();
 
       zone_chg_elapsed_t = zone_chg_curr_t - zone_chg_start_t;
 
       /* Do a zone change */
-      if (lStart || zone_chg_elapsed_t >= zone_chg_interval_t)
+      if ( lStart || (zone_chg_elapsed_t >= zone_chg_interval_t) )
       {
         if (lStart)
         {
           zone_idx = -1; // will be increased in code below
+          //lStart = false;
         }
-        lStart = false;
         TimeToChangeZone = true;
         zone_chg_start_t = zone_chg_curr_t;
         /*
@@ -934,6 +1024,7 @@ void loop(void)
       disp_data();
       //delay(1000);  // Wait 1 second
     }
+    lStart = false;
     M5Dial.update(); // read btn state etc.
   }
   static constexpr const char txt20[] PROGMEM = "Bye...";
