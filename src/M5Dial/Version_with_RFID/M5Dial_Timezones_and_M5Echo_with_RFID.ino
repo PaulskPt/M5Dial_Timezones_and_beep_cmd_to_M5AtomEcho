@@ -298,7 +298,7 @@ void esp_sntp_initialize()
 
   // check the set sync_interval
   uint32_t rcvd_sync_interval_secs = esp_sntp_get_sync_interval();
-  static constexpr const char txt4[] PROGMEM = "sntp polling interval (readback from NTP server): ";
+  static constexpr const char txt4[] PROGMEM = "sntp polling interval (readback from SNTP server): ";
   static constexpr const char txt5[] PROGMEM = " Minute(s)";
   std::cout << *TAG << txt4 << std::to_string(rcvd_sync_interval_secs/60000) << txt5 << std::endl;
 }
