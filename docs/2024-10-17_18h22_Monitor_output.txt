@@ -1,0 +1,139 @@
+2024-10-17 18h22 utc+1
+
+
+Board: M5Stack M5Dial with connected to M5Atom Echo.
+
+Arduino IDE v2.3.3
+
+Sketch: M5Dial_Timezones_and_M5Echo_RFID_ver_2024-10-14_18h56.ino
+
+Note: functions time_sync_notification_cb() and secs_since_last_sync() testing new algorithm about epoch time difference.
+
+Observation: With help of MS CoPilot I managed to changes contents of function time_sync_notification_cb() in such a way that successive
+             currentTime values are higher than the value of "last_time_sync_epoch" or "start_time_sync_epoch".
+			 The value "start_time_sync_epoch" is set when global variable "lStart" is true. Next the "value start_time_sync_epoch"
+			 is never updated. It is used as a reference.
+			 
+			 After creating a pre-compilation directive: 
+			 #define DEBUG_OUTPUT 0
+			 
+			 In function time_sync_notification_cb() I added two blocks like this:
+			 #ifdef DEBUG_OUTPUT
+				...CODE...
+			 #endif
+
+			 With the result that this debug output did not appear (was not compiled), as was my intention.
+			 
+			 Note that after this test I changed the NTP sync interval from 5 to 15 minutes.
+
+Monitor output (partially):
+
+18:22:41.997 -> ESP-ROM:esp32s3-20210327
+18:22:41.997 -> Build:Mar 27 2021
+18:22:41.997 -> rst:0xc (RTC_SW_CPU_RST),boot:0xb (SPI_FAST_FLASH_BOOT)
+18:22:41.997 -> Saved PC:0x4037afa2
+18:22:41.997 -> SPIWP:0xee
+18:22:41.997 -> mode:DIO, clock div:1
+18:22:41.997 -> load:0x3fce3818,len:0x109c
+18:22:41.997 -> load:0x403c9700,len:0x4
+18:22:41.997 -> load:0x403c9704,len:0xb50
+18:22:41.997 -> load:0x403cc700,len:0x2fe4
+18:22:41.997 -> entry 0x403c98ac
+18:22:42.451 -> 
+18:22:42.451 -> 
+18:22:42.451 -> setup(): M5Stack M5Dial Timezones and M5Atom Echo with RFID test.
+18:22:42.451 -> setup(): setting display brightness to 50 (range 0-255)
+18:22:46.531 -> 
+
+18:22:46.531 -> WiFi Connected
+18:22:46.531 -> sntp_initialize(): sntp polling interval (readback from NTP server): 5 Minute(s)
+18:22:46.531 -> setup(): sntp sync status = 0
+18:22:47.502 -> loop(): global flag use_rfid = True
+18:22:48.130 -> time_sync_notification_cb(): Current GMT Time: Thu Oct 17 17:22:49 2024    <<<=== 1st NTP sync
+18:22:48.655 -> initTime(): NTP Connected. 
+18:22:48.655 -> ntp_sync_notification_txt(): Sending beep command to the M5 Atom Echo device
+18:22:49.654 -> loop(): time synchronized at time (UTC): Thu Oct 17 17:22:51 2024
+18:22:49.654 -> loop(): external RTC updated from NTP server datetime stamp
+18:22:49.654 -> 
+18:22:49.654 -> loop(): new zone_idx = 0
+18:22:50.624 -> printLocalTime(): Timezone: America/Kentucky/Louisville, datetime: 2024-10-17 13:22:52
+18:23:15.454 -> loop(): new zone_idx = 1
+18:23:16.478 -> printLocalTime(): Timezone: America/New_York, datetime: 2024-10-17 13:23:18
+18:23:41.308 -> loop(): new zone_idx = 2
+18:23:42.305 -> printLocalTime(): Timezone: America/Sao_Paulo, datetime: 2024-10-17 14:23:43
+18:24:07.134 -> loop(): new zone_idx = 3
+18:24:08.095 -> printLocalTime(): Timezone: Europe/Lisbon, datetime: 2024-10-17 18:24:09
+18:24:32.950 -> loop(): new zone_idx = 4
+18:24:33.916 -> printLocalTime(): Timezone: Europe/Amsterdam, datetime: 2024-10-17 19:24:35
+18:24:58.778 -> loop(): new zone_idx = 5
+18:24:59.734 -> printLocalTime(): Timezone: Asia/Tokyo, datetime: 2024-10-18 02:25:01
+18:25:24.540 -> loop(): new zone_idx = 6
+18:25:25.584 -> printLocalTime(): Timezone: Australia/Sydney, datetime: 2024-10-18 04:25:27
+18:25:50.398 -> 
+18:25:50.398 -> 
+18:25:50.398 -> loop(): new zone_idx = 0
+18:25:51.360 -> printLocalTime(): Timezone: America/Kentucky/Louisville, datetime: 2024-10-17 13:25:53
+18:26:16.229 -> loop(): new zone_idx = 1
+18:26:17.210 -> printLocalTime(): Timezone: America/New_York, datetime: 2024-10-17 13:26:18
+18:26:42.026 -> loop(): new zone_idx = 2
+18:26:43.040 -> printLocalTime(): Timezone: America/Sao_Paulo, datetime: 2024-10-17 14:26:44
+18:27:07.856 -> loop(): new zone_idx = 3
+18:27:08.826 -> printLocalTime(): Timezone: Europe/Lisbon, datetime: 2024-10-17 18:27:10
+18:27:33.668 -> loop(): new zone_idx = 4
+18:27:34.667 -> printLocalTime(): Timezone: Europe/Amsterdam, datetime: 2024-10-17 19:27:36
+
+[...]
+
+18:27:48.924 -> time_sync_notification_cb(): Current GMT Time: Thu Oct 17 17:27:50 2024   <<<=== 2nd NTP sync (after 5 minutes)
+18:27:49.112 -> initTime(): NTP Connected. 
+18:27:49.458 -> ntp_sync_notification_txt(): Sending beep command to the M5 Atom Echo device
+18:27:50.113 -> loop(): time synchronized at time (UTC): Thu Oct 17 17:27:52 2024   
+18:27:50.113 -> loop(): external RTC updated from NTP server datetime stamp
+
+
+18:28:00.467 -> loop(): new zone_idx = 5
+18:28:01.483 -> printLocalTime(): Timezone: Asia/Tokyo, datetime: 2024-10-18 02:28:03
+18:28:26.304 -> loop(): new zone_idx = 6
+18:28:27.301 -> printLocalTime(): Timezone: Australia/Sydney, datetime: 2024-10-18 04:28:29
+18:28:52.100 -> 
+18:28:52.141 -> loop(): new zone_idx = 0
+18:28:53.123 -> printLocalTime(): Timezone: America/Kentucky/Louisville, datetime: 2024-10-17 13:28:55
+18:29:17.966 -> loop(): new zone_idx = 1
+18:29:18.932 -> printLocalTime(): Timezone: America/New_York, datetime: 2024-10-17 13:29:20
+18:29:43.773 -> loop(): new zone_idx = 2
+18:29:44.746 -> printLocalTime(): Timezone: America/Sao_Paulo, datetime: 2024-10-17 14:29:46
+18:30:09.595 -> loop(): new zone_idx = 3
+18:30:10.595 -> printLocalTime(): Timezone: Europe/Lisbon, datetime: 2024-10-17 18:30:12
+18:30:35.420 -> loop(): new zone_idx = 4
+18:30:36.415 -> printLocalTime(): Timezone: Europe/Amsterdam, datetime: 2024-10-17 19:30:38
+18:31:01.205 -> loop(): new zone_idx = 5
+18:31:02.243 -> printLocalTime(): Timezone: Asia/Tokyo, datetime: 2024-10-18 02:31:04
+18:31:27.026 -> loop(): new zone_idx = 6
+18:31:28.043 -> printLocalTime(): Timezone: Australia/Sydney, datetime: 2024-10-18 04:31:30
+18:31:52.873 -> 
+18:31:52.873 -> loop(): new zone_idx = 0
+18:31:53.835 -> printLocalTime(): Timezone: America/Kentucky/Louisville, datetime: 2024-10-17 13:31:55
+
+[...]
+
+18:31:52.873 -> loop(): new zone_idx = 0
+18:31:53.835 -> printLocalTime(): Timezone: America/Kentucky/Louisville, datetime: 2024-10-17 13:31:55
+18:32:18.663 -> loop(): new zone_idx = 1
+18:32:19.687 -> printLocalTime(): Timezone: America/New_York, datetime: 2024-10-17 13:32:21
+18:32:44.507 -> loop(): new zone_idx = 2
+18:32:45.507 -> printLocalTime(): Timezone: America/Sao_Paulo, datetime: 2024-10-17 14:32:47
+18:32:49.638 -> time_sync_notification_cb(): Current GMT Time: Thu Oct 17 17:32:51 2024  <<<=== 3rd NTP sync (again, after 5 minutes)
+18:32:50.122 -> ntp_sync_notification_txt(): Sending beep command to the M5 Atom Echo device
+18:32:54.740 -> initTime(): NTP Connected. 
+18:32:55.458 -> time_sync_notification_cb(): Current GMT Time: Thu Oct 17 17:32:57 2024
+18:32:55.772 -> loop(): time synchronized at time (UTC): Thu Oct 17 17:32:57 2024
+18:32:55.772 -> loop(): external RTC updated from NTP server datetime stamp
+8:33:11.320 -> loop(): new zone_idx = 3
+18:33:12.320 -> printLocalTime(): Timezone: Europe/Lisbon, datetime: 2024-10-17 18:33:14
+18:33:37.121 -> loop(): new zone_idx = 4
+18:33:38.159 -> printLocalTime(): Timezone: Europe/Amsterdam, datetime: 2024-10-17 19:33:40
+18:34:02.972 -> loop(): new zone_idx = 5
+18:34:03.944 -> printLocalTime(): Timezone: Asia/Tokyo, datetime: 2024-10-18 02:34:06
+18:34:28.780 -> loop(): new zone_idx = 6
+18:34:29.751 -> printLocalTime(): Timezone: Australia/Sydney, datetime: 2024-10-18 04:34:31
+
