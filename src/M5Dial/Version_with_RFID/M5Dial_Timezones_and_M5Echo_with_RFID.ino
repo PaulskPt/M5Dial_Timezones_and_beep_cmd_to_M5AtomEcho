@@ -198,14 +198,6 @@ void ntp_sync_notification_txt(bool show) {
   }
 }
 
- /*
-  time_t now = tv->tv_sec;  // Convert timeval to time_t
-  static constexpr const char txt2[] PROGMEM = "Current GMT time derived from ( tv->tv.sec ): ";
-  struct std::tm * ptm = std::gmtime(&now);
-  std::cout << *TAG << txt2 << std::put_time(ptm,"%c") << std::endl;
-  time_t curr_time_sync_epoch = mktime(ptm);
-  */
-
 /* Code by MS CoPilot */
 // The sntp callback function
 void time_sync_notification_cb(struct timeval *tv) {
