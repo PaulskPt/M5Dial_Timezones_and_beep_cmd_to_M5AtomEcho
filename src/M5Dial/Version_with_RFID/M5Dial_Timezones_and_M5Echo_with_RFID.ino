@@ -19,9 +19,8 @@
 *  Update: 2024-10-14. To prevent 100% memory usage: deleted a few functions. Deleted a lot of if(my_debug) conditional prints with a lot of text.
 *  Assigned more variables as static procexpr const PROGMEM.
 *
-*  Update: 2024-10-15: Moved all zone definitions to secret.h. Deleted function: void map_replace_first_zone(void).
+*  Update: 2025-10-15: Moved all zone definitions to secret.h. Deleted function: void map_replace_first_zone(void).
 *          Changed function create_maps(). This function now imports all zone and zone_code definitions into a map.
-*  Update: 2024-10-17: Improved code in function tim_notification_cb(). Also added preprocessor directive: #define DEBUG_OUTPUT 0 // Off.
 */
 
 #include <M5Dial.h>
@@ -62,9 +61,9 @@
 #undef CONFIG_LWIP_SNTP_UPDATE_DELAY
 #endif
 
-uint32_t CONFIG_LWIP_SNTP_UPDATE_DELAY = 5 * 60 * 1000; // = 5 minutes in milliseconds (15 seconds is the minimum). Original setting: 300000  // 1 hour
+uint32_t CONFIG_LWIP_SNTP_UPDATE_DELAY = 15 * 60 * 1000; // = 5 minutes in milliseconds (15 seconds is the minimum). Original setting: 300000  // 1 hour
 uint32_t CONFIG_LWIP_SNTP_UPDATE_DELAY_IN_SECONDS = CONFIG_LWIP_SNTP_UPDATE_DELAY / 1000;
-uint16_t CONFIG_LWIP_SNTP_UPDATE_DELAY_IN_MINUTES = CONFIG_LWIP_SNTP_UPDATE_DELAY_IN_SECONDS / 60;  // Shoud be 5 minutes
+uint16_t CONFIG_LWIP_SNTP_UPDATE_DELAY_IN_MINUTES = CONFIG_LWIP_SNTP_UPDATE_DELAY_IN_SECONDS / 60;  // Shoud be 15 minutes
 // 4-PIN connector type HY2.0-4P
 #define PORT_B_GROVE_OUT_PIN 2
 #define PORT_B_GROVE_IN_PIN  1
