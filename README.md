@@ -39,7 +39,7 @@ For each of the seven timezones, in four steps, the following data will be displ
 Each time zone sequence of four displays is repeated for 25 seconds. This repeat time is defined in function ```loop()```:
 
 ```
-762 unsigned long const zone_chg_interval_t = 25 * 1000L; // 25 seconds
+845 unsigned long const zone_chg_interval_t = 25 * 1000L; // 25 seconds
 ```
 
 M5Dial Display:
@@ -59,14 +59,14 @@ M5Dial reset:
 Pressing the M5Dial button (of the display) will cause a software reset.
 
 On reset the Arduino Sketch will try to connect to the WiFi Access Point of your choice (set in secret.h). 
-The sketch will connect to a NTP server of your choice. In this version the sketch uses a ```NTP polling system```. 
-The following define sets the NTP polling interval time:
+The sketch will connect to a SNTP server of your choice. In this version the sketch uses a ```NTP polling system```. 
+The following define sets the SNTP polling interval time:
 
 ```
-64 #define CONFIG_LWIP_SNTP_UPDATE_DELAY  15 * 60 * 1000 // = 15 minutes
+66 #define CONFIG_LWIP_SNTP_UPDATE_DELAY  15 * 60 * 1000 // = 15 minutes
 ```
 
-At the moment of a NTP Time Synchronization, the text "TS" will be shown in the middle of the toprow of the display.
+At the moment of a SNTP Time Synchronization, the text "TS" will be shown in the middle of the toprow of the display.
 The sketch will also send a digital impulse via GROVE PORT B of the M5Dial, pin 1 (GROVE white wire).
 The internal RTC of the M5Dial device will be set to the NTP datetime stamp with the local time for the current Timezone.
 Next the sketch will display time zone name, timezone offset from UTC, date and time of the current Timezone.
@@ -88,6 +88,8 @@ in the following map:
 M5Dial Debug output:
 
 Because of memory limitations all of the if (my_debug) {...} blocks were removed.
+Only in function time_sync_notification_cb() there is used a preprocessor directive DEBUG_OUTPUT. (In M5Dial version 2),
+defined in line 52.
 
 File secret.h:
 
