@@ -63,9 +63,9 @@
 
 // Interval set to: 900000 mSec = 15 minutes in milliseconds (15 seconds is the minimum),
 // See: https://github.com/espressif/esp-idf/blob/master/components/lwip/apps/sntp/sntp.c
-uint32_t CONFIG_LWIP_SNTP_UPDATE_DELAY = 15 * 60 * 1000; 
+uint32_t CONFIG_LWIP_SNTP_UPDATE_DELAY = 15 * 60 * 1000; // 15 minutes
 uint32_t CONFIG_LWIP_SNTP_UPDATE_DELAY_IN_SECONDS = CONFIG_LWIP_SNTP_UPDATE_DELAY / 1000;
-uint16_t CONFIG_LWIP_SNTP_UPDATE_DELAY_IN_MINUTES = CONFIG_LWIP_SNTP_UPDATE_DELAY_IN_SECONDS / 60;  // Shoud be 15 minutes
+uint16_t CONFIG_LWIP_SNTP_UPDATE_DELAY_IN_MINUTES = CONFIG_LWIP_SNTP_UPDATE_DELAY_IN_SECONDS / 60;  
 // 4-PIN connector type HY2.0-4P
 #define PORT_B_GROVE_OUT_PIN 2
 #define PORT_B_GROVE_IN_PIN  1
