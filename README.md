@@ -150,6 +150,10 @@ Images:
 
 Images taken during the sketch was running are in the folder ```images```.
 
+Video:
+
+Here is a link to a post on X: [Post](https://x.com/PSchulinck/status/1847631815902625945?t=Y801U7cWpaVQeQWlq13S_A&s=19)
+
 Links to product pages of the hardware used:
 
 - M5Stack M5Dial [info](https://docs.m5stack.com/en/core/M5Dial);
