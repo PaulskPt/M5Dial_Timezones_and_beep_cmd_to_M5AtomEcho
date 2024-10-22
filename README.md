@@ -139,6 +139,14 @@ If sound is ON (default), the RGB Led will show RED color.
 
 2024-10-17: Version 2 for M5Dial: in function ```time_sync_notification_cb()``` changed the code a lot to make certain that the function initTime() gets called only once at the moment of a SNTP synchronization.
 
+2024-10-22: created a second version M5Dial with RFID however with few messages to the Serial Monitor to reduce the use of memory.
+Name of this sketch: ```M5Dial_Timezones_and_M5Echo_with_RFID_few_msgs.ino```.
+
+Known problem:
+
+After hours of use the display changes an empty black background display, however the output to the Serial Monitor is continuing and the beep commands to the M5Echo are continuing also.
+We're working on this to eleminate this problem.
+
 Docs:
 
 ```
