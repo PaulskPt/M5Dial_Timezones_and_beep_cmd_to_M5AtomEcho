@@ -21,13 +21,10 @@
 *
 *  Update: 2024-10-15: Moved all zone definitions to secret.h. Deleted function: void map_replace_first_zone(void).
 *          Changed function create_maps(). This function now imports all zone and zone_code definitions into a map.
-*  Update: 2024-10-22: Deleted almost all msgs output to Serial monitor to reduce memory usage.
+*  Update: 2024-10-23: In this version various functions are, with help of MS CoPilot optimized for memory use and
+*          to prevent memory leakages (which happened in setTimezone() and disp_data()).
 */
 #include <Arduino.h>
-//#include "freertos/FreeRTOS.h"
-//#include "freertos/task.h"
-//#include "freertos/queue.h"
-
 #include <M5Dial.h>
 #include <M5Unified.h>
 #include <M5GFX.h>
@@ -36,6 +33,8 @@
 #include <WiFi.h>
 #include <TimeLib.h>
 #include <stdlib.h>   // for putenv
+#include <stdio.h>
+#include <string.h>
 #include <sys/time.h>
 //#include <time.h>
 #include <DateTime.h> // See: /Arduino/libraries/ESPDateTime/src
@@ -69,10 +68,6 @@
 // 4-PIN connector type HY2.0-4P
 #define PORT_B_GROVE_OUT_PIN 2
 #define PORT_B_GROVE_IN_PIN  1
-
-std::string elem_zone;
-std::string elem_zone_code;
-std::string elem_zone_code_old;
 
 bool lStart = true;
 bool display_on = true;
@@ -195,49 +190,34 @@ void esp_sntp_initialize() {
 }
 
 void setTimezone(void) {
-  elem_zone = std::get<0>(zones_map[zone_idx]);
-  elem_zone_code = std::get<1>(zones_map[zone_idx]);
-  if (elem_zone_code != elem_zone_code_old) {
-    elem_zone_code_old = elem_zone_code;
-  }
-  setenv("TZ",elem_zone_code.c_str(),1);
-  delay(500);
+  char elem_zone_code[50];
+  strcpy(elem_zone_code, std::get<1>(zones_map[zone_idx]).c_str());
+  setenv("TZ", elem_zone_code, 1);
   tzset();
-  delay(500);
 }
 
 bool initTime(void) {
+  char elem_zone[50];
+  char my_tz_code[50];
   bool ret = false;
-  // #define NTP_SERVER2   "1.pool.ntp.org"
-  // #define NTP_SERVER3   "2.pool.ntp.org"
   static constexpr const char NTP_SERVER2[] PROGMEM = "1.pool.ntp.org";
   static constexpr const char NTP_SERVER3[] PROGMEM = "2.pool.ntp.org";
-  elem_zone = std::get<0>(zones_map[zone_idx]);
 
-#ifndef ESP32
-#define ESP32 (1)
-#endif
+  strcpy(elem_zone, std::get<0>(zones_map[zone_idx]).c_str());
+  strcpy(my_tz_code, getenv("TZ"));
 
-  std::string my_tz_code = getenv("TZ");
-
-// See: /Arduino/libraries/ESPDateTime/src/DateTime.cpp, lines 76-80
-#if defined(ESP8266)
-  configTzTime(elem_zone_code.c_str(), NTP_SERVER1, NTP_SERVER2, NTP_SERVER3); 
-#elif defined(ESP32)
-  // configTime(0, 3600, NTP_SERVER1);
-  configTzTime(my_tz_code.c_str(), NTP_SERVER1, NTP_SERVER2, NTP_SERVER3);  // This one is used for the M5Stack Atom Matrix
-#endif
+  configTzTime(my_tz_code, NTP_SERVER1, NTP_SERVER2, NTP_SERVER3);
 
   struct tm my_timeinfo;
   while (!getLocalTime(&my_timeinfo, 1000)) {
-    delay(1000);
-  };
-  if (my_timeinfo.tm_sec == 0 && my_timeinfo.tm_min  == 0 && my_timeinfo.tm_hour  == 0 &&
-      my_timeinfo.tm_mday == 0 && my_timeinfo.tm_mon  == 0 && my_timeinfo.tm_year  == 0 &&
-      my_timeinfo.tm_wday == 0 && my_timeinfo.tm_yday == 0 && my_timeinfo.tm_isdst == 0) {
-  } else {
-    setTimezone();
-    ret = true;
+      delay(1000);
+  }
+
+  if (my_timeinfo.tm_sec != 0 || my_timeinfo.tm_min  != 0 || my_timeinfo.tm_hour  != 0 || 
+      my_timeinfo.tm_mday != 0 || my_timeinfo.tm_mon  != 0 || my_timeinfo.tm_year  != 0 || 
+      my_timeinfo.tm_wday != 0 || my_timeinfo.tm_yday != 0 || my_timeinfo.tm_isdst != 0) {
+      setTimezone();
+      ret = true;
   }
   return ret;
 }
@@ -262,112 +242,121 @@ bool set_RTC(void) {
    to increase a "catch" a display touch or a BtnA keypress.
 */
 void disp_data(void) {
-  static constexpr const int disp_data_delay = 1000;
-  // For unitOLED
-  static constexpr const int scrollstep = 2;
-  elem_zone  = std::get<0>(zones_map[zone_idx]);
-  std::string copiedString, copiedString2;
-  std::string part1, part2, part3, part4;
-  std::string partUS1, partUS2;
-  int index1, index2, index3 = -1;
-  copiedString =  elem_zone;
-  // Search for a first forward slash (e.g.: "Europe/Lisbon")
-  index1 = copiedString.find('/');
-  index3 = copiedString.find('_'); // e.g. in "New_York" or "Sao_Paulo"
+    struct tm my_timeinfo;
+    if (!getLocalTime(&my_timeinfo)) return;
 
-  if (ck_touch() > 0) return;
-  if (ck_Btn()) return;
-  if(sync_time) return;
+    M5.Display.clear(TFT_BLACK);
+    M5Dial.Display.setTextColor(TFT_ORANGE, TFT_BLACK);
 
-  if (index3 >= 0) {
-    partUS1 = copiedString.substr(0, index3);
-    partUS2 = copiedString.substr(index3+1);
-    copiedString = partUS1 + " " + partUS2;  // replaces the found "_" by a space " "
-  }
-  if (index1 >= 0) {
-    part1 = copiedString.substr(0, index1);
-    part2 = copiedString.substr(index1+1);
+    char elem_zone[50];
+    strncpy(elem_zone, std::get<0>(zones_map[zone_idx]).c_str(), sizeof(elem_zone) - 1);
+    elem_zone[sizeof(elem_zone) - 1] = '\0'; // Ensure null termination
 
-    copiedString2 = part2.c_str();
+    char part1[20], part2[20], part3[20], part4[20];
+    char copiedString[50], copiedString2[50];
 
-    // Search for a second forward slash  (e.g.: "America/Kentucky/Louisville")
-    index2 = copiedString2.find('/'); 
-    if (index2 >= 0) {
-      part3 = copiedString2.substr(0, index2);
-      part4 = copiedString2.substr(index2+1);
+    memset(part1, 0, sizeof(part1));
+    memset(part2, 0, sizeof(part2));
+    memset(part3, 0, sizeof(part3));
+    memset(part4, 0, sizeof(part4));
+    memset(copiedString, 0, sizeof(copiedString));
+    memset(copiedString2, 0, sizeof(copiedString2));
+    
+    char *index1 = strchr(elem_zone, '/');  // index to the 1st occurrance of a forward slash (e.g.: Europe/Lisbon)
+    char *index2 = nullptr; 
+    char *index3 = strchr(elem_zone, '_'); // index to the occurrance of an underscore character (e.g.: Sao_Paulo)
+    int disp_data_view_delay = 1000;
+
+    strncpy(copiedString, elem_zone, sizeof(copiedString) - 1);
+    copiedString[sizeof(copiedString) - 1] = '\0'; // Ensure null termination
+    // Check if index1 is valid and within bounds
+    if (index1 != nullptr) {
+      size_t idx1_pos = index1 - elem_zone;
+      if (idx1_pos < sizeof(copiedString)) {
+        strncpy(part1, copiedString, idx1_pos);
+        part1[idx1_pos] = '\0';
+      }
+      strncpy(copiedString2, index1 + 1, sizeof(copiedString2) - 1);
+      copiedString2[sizeof(copiedString2) - 1] = '\0'; // Ensure null termination
+      if (index3 != nullptr) {
+        // Replace underscores with spaces in copiedString
+        for (int i = 0; i < sizeof(copiedString2); i++) {
+          if (copiedString2[i] == '_') {
+            copiedString2[i] = ' ';
+          }
+        }
+      }
+      index2 = strchr(copiedString2, '/'); // index to the 2nd occurrance of a forward slahs (e.g.: America/Kentucky/Louisville)
+      if (index2 != nullptr) {
+        size_t idx2_pos = index2 - copiedString2;
+        if (idx2_pos < sizeof(copiedString2)) {
+            strncpy(part3, copiedString2, idx2_pos);  // part3, e.g.: "Kentucky"
+            part3[idx2_pos] = '\0';
+        }
+        strncpy(part4, index2 + 1, sizeof(part4) - 1);  // part4, e.g.: "Louisville"
+        part4[sizeof(part4) - 1] = '\0'; // Ensure null termination
+      } else {
+        strncpy(part2, copiedString2, sizeof(part2) - 1);
+        part2[sizeof(part2) - 1] = '\0'; // Ensure null termination
+      }
     }
-  }
-  struct tm my_timeinfo;
-  if(!getLocalTime(&my_timeinfo)) return;
-  
-  // =========== 1st view =================
-  if (ck_touch() > 0) return;
-  if (ck_Btn()) return;
+    if (ck_touch() > 0) return;
+    if (ck_BtnA()) return;
 
-  M5.Display.clear(TFT_BLACK);
-  M5Dial.Display.setTextColor(TFT_ORANGE, TFT_BLACK);
-  if (index1 >= 0 && index2 >= 0) {
-    M5Dial.Display.setCursor(hori[1], vert[1]+5);
-    M5Dial.Display.print(part1.c_str());
-    M5Dial.Display.setCursor(hori[1], vert[2]-2);
-    M5Dial.Display.print(part3.c_str());
-    M5Dial.Display.setCursor(hori[1], vert[3]-10);
-    M5Dial.Display.print(part4.c_str());
-  } else if (index1 >= 0) {
-    M5Dial.Display.setCursor(hori[1], vert[1]+5);
-    M5Dial.Display.print(part1.c_str());
-    M5Dial.Display.setCursor(hori[1], vert[2]);
-    M5Dial.Display.print(part2.c_str());
-  } else {
-    M5Dial.Display.setCursor(hori[1], vert[1]+5);
-    M5Dial.Display.print(copiedString.c_str());
-  }
-  if (ck_touch() > 0) return;
-  delay(disp_data_delay);
-  if (TimeToChangeZone) return;
-  // =========== 2nd view =================
-  if (ck_Btn()) return;
-  M5.Display.clear(TFT_BLACK);
-  M5Dial.Display.setTextColor(TFT_ORANGE, TFT_BLACK);
-  M5Dial.Display.setCursor(hori[1], vert[1]+5);
-  M5Dial.Display.print("Zone");
-  M5Dial.Display.setCursor(hori[1], vert[2]);
-  M5Dial.Display.print(&my_timeinfo, "%Z %z");
-  if (ck_touch() > 0) return;
-  delay(disp_data_delay);
-  if (TimeToChangeZone) return;
-  // =========== 3rd view =================
-  if (ck_Btn()) return;
-  M5.Display.clear(TFT_BLACK);
-  M5Dial.Display.setTextColor(TFT_ORANGE, TFT_BLACK);
-  M5Dial.Display.setCursor(hori[1], vert[1]+5);
-  M5Dial.Display.print(&my_timeinfo, "%A");  // Day of the week
-  M5Dial.Display.setCursor(hori[1], vert[2]-2);
-  M5Dial.Display.print(&my_timeinfo, "%B %d");
-  M5Dial.Display.setCursor(hori[1], vert[3]-10);
-  M5Dial.Display.print(&my_timeinfo, "%Y");
-  if (ck_touch() > 0) return;
-  delay(disp_data_delay);
-  if (TimeToChangeZone) return;
-  // =========== 4th view =================
-  if (ck_Btn()) return;
-  M5.Display.clear(TFT_BLACK);
-  M5Dial.Display.setTextColor(TFT_ORANGE, TFT_BLACK);
-  M5Dial.Display.setCursor(hori[1], vert[1]+5);
-  M5Dial.Display.print(&my_timeinfo, "%H:%M:%S");
-  M5Dial.Display.setCursor(hori[1], vert[2]);
-  if (index2 >= 0) {
-    M5Dial.Display.printf("in %s\n", part4.c_str());
-  }
-  else if (index1 >= 0)
-    M5Dial.Display.printf("in %s\n", part2.c_str());
-  if (ck_touch() > 0) return;
-  delay(disp_data_delay);
-}
+    if (index1 != nullptr && index2 != nullptr) {
+        M5Dial.Display.setCursor(50, 65);
+        M5Dial.Display.print(part1);
+        M5Dial.Display.setCursor(50, 118);
+        M5Dial.Display.print(part3);
+        M5Dial.Display.setCursor(50, 170);
+        M5Dial.Display.print(part4);
+    } else if (index1 != nullptr) {
+        M5Dial.Display.setCursor(50, 65);
+        M5Dial.Display.print(part1);
+        M5Dial.Display.setCursor(50, 120);
+        M5Dial.Display.print(part2);
+    } else {
+        M5Dial.Display.setCursor(50, 65);
+        M5Dial.Display.print(copiedString);
+    }
+    delay(disp_data_view_delay);
 
-// Created to eliminate one more global variable
-int setDispBrightness(void) {
-  return 50;
+    if (ck_touch() > 0) return;
+    if (ck_BtnA()) return;
+
+    M5Dial.Display.clear();
+    M5Dial.Display.setCursor(50, 65);
+    M5Dial.Display.print("Zone");
+    M5Dial.Display.setCursor(50, 120);
+    M5Dial.Display.print(&my_timeinfo, "%Z %z");
+
+    delay(disp_data_view_delay);
+    if (ck_touch() > 0) return;
+    if (ck_BtnA()) return;
+
+    M5Dial.Display.clear();
+    M5Dial.Display.setCursor(50, 65);
+    M5Dial.Display.print(&my_timeinfo, "%A");
+    M5Dial.Display.setCursor(50, 118);
+    M5Dial.Display.print(&my_timeinfo, "%B %d");
+    M5Dial.Display.setCursor(50, 170);
+    M5Dial.Display.print(&my_timeinfo, "%Y");
+
+    delay(disp_data_view_delay);
+    if (ck_touch() > 0) return;
+    if (ck_BtnA()) return;
+
+    M5Dial.Display.clear();
+    M5Dial.Display.setCursor(40, 65);
+    M5Dial.Display.print(&my_timeinfo, "%H:%M:%S local");
+    M5Dial.Display.setCursor(50, 120);
+
+    if (index2 != nullptr) {
+        M5Dial.Display.printf("in %s\n", part4);
+    } else if (index1 != nullptr) {
+        M5Dial.Display.printf("in %s\n", part2);
+    }
+    delay(disp_data_view_delay);
 }
 
 void disp_msg(String str) {
@@ -380,7 +369,7 @@ void disp_msg(String str) {
   //M5Dial.Display.drawString(str2, M5Dial.Display.width() / 2, M5Dial.Display.height() / 2);
   delay(6000);
   M5Dial.Display.fillScreen(TFT_BLACK);
-  M5Dial.Display.setBrightness(setDispBrightness()); // Restore brightness to normal
+  M5Dial.Display.setBrightness(50); // Restore brightness to normal
   M5Dial.Display.clear();
 }
 
@@ -405,9 +394,8 @@ bool connect_WiFi(void) {
   return ret;
 }
 
-bool buttonPressed = false;
-
-bool ck_Btn() {
+bool ck_BtnA() {
+  bool buttonPressed = false;
   M5Dial.update();
   //if (M5Dial.BtnA.isPressed())
   if (M5Dial.BtnA.wasPressed()) { // 100 mSecs
@@ -564,7 +552,7 @@ void setup(void) {
   Serial.print("\n\n");
   Serial.println(txt2);
   M5Dial.Display.init();
-  M5Dial.Display.setBrightness(setDispBrightness());  // 0-255
+  M5Dial.Display.setBrightness(50);  // 0-255
   M5Dial.Display.setRotation(0);
   M5Dial.Display.fillScreen(TFT_BLACK);
   M5Dial.Display.setTextColor(TFT_ORANGE, TFT_BLACK);
@@ -647,12 +635,12 @@ void loop() {
   bool use_rfid = true; 
 
   while (true) {
-    if (use_rfid) { 
+    if (use_rfid) {
       if (ck_RFID()) {
         touch_cnt++;
       }
     } else {
-      touch_cnt = ck_touch();
+        touch_cnt = ck_touch();
     }
   
     if (touch_cnt > 0) {
@@ -674,7 +662,7 @@ void loop() {
           // See: https://github.com/m5stack/m5-docs/blob/master/docs/en/api/lcd.md
           M5.Display.wakeup();
           i_am_asleep = false;
-          M5.Display.setBrightness(setDispBrightness());  // 0 - 255
+          M5.Display.setBrightness(50);  // 0 - 255
           disp_msg(txts[0]);
           M5Dial.Display.setTextColor(TFT_ORANGE, TFT_BLACK);
           M5.Display.clear(TFT_BLACK);
@@ -696,9 +684,7 @@ void loop() {
       }
     }
 
-    buttonPressed = ck_Btn();
-
-    if (buttonPressed) {
+    if (ck_BtnA()) {
       // We have a button press so do a software reset
       disp_msg(txts[2]); // there is already a wait of 6000 in disp_msg()
       //delay(3000);
@@ -719,9 +705,9 @@ void loop() {
         if (sync_time) {
           if (initTime()) {
             if (set_RTC()) {
-              sync_time = false;
-              Serial.printf("%s%s%s\n", txts[7], txts[8], txts[9]);  // was: txt[16]
-              Serial.printf("%s%u\n", txts[10], ESP.getFreeHeap()); 
+                sync_time = false;
+                Serial.printf("%s%s%s\n", txts[7], txts[8], txts[9]);  // was: txt[16]
+                Serial.printf("%s%u\n", txts[10], ESP.getFreeHeap()); 
             }
           }
         }
@@ -754,14 +740,13 @@ void loop() {
       }
     }
     if (display_on) {
-      disp_data();
-      //delay(1000);  // Wait 1 second
+        disp_data();
+        //delay(1000);  // Wait 1 second
     }
     lStart = false;
     M5Dial.update(); // read btn state etc.
   }
   disp_msg(txts[3]);
-  // vTaskDelay(1000 / portTICK_PERIOD_MS);
   //M5Dial.update();
   /* Go into an endless loop after WiFi doesn't work */
   do {
