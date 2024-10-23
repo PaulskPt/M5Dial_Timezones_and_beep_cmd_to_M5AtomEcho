@@ -142,7 +142,7 @@ If sound is ON (default), the RGB Led will show RED color.
 2024-10-22: created a second version M5Dial with RFID however with few messages to the Serial Monitor to reduce the use of memory.
 Name of this sketch: ```M5Dial_Timezones_and_M5Echo_with_RFID_few_msgs.ino```.
 
-2024-10-23: totally rebuild function disp_data(), to eliminate memory leaks.
+2024-10-23: totally rebuilt function disp_data(), to eliminate memory leaks.
 
 Docs:
 
