@@ -2,9 +2,9 @@
 *  
 *  M5Dial_Timezones_and_M5Echo_with_RFID_few_msgs.ino
 *  Test sketch for M5Stack M5Dial with 240 x 240 pixels
-*  This sketch displays in sequence six different timezones.
+*  This sketch displays in sequence seven different timezones.
 *  This version uses SNTP automatic polling.
-*  by @PaulskPt 2024-10-05. Last update; 2024-10-22.
+*  by @PaulskPt 2024-10-05. Last update; 2024-10-23.
 *  License: MIT
 *
 *  Example:
@@ -23,10 +23,13 @@
 *          Changed function create_maps(). This function now imports all zone and zone_code definitions into a map.
 *  Update: 2024-10-23: In this version various functions are, with help of MS CoPilot optimized for memory use and
 *          to prevent memory leakages (which happened in setTimezone() and disp_data()).
+*          Since a full night the sketch is running without problem.
+*  Update: 2024-10-25: changed the way to "catch" BtnA press. It appears it improved the catch chance.
+*  Update: 2024-10-31: changed the SNTP poll interval to 1 hour
 */
 #include <Arduino.h>
 #include <M5Dial.h>
-#include <M5Unified.h>
+//#include <M5Unified.h>
 #include <M5GFX.h>
 
 #include <esp_sntp.h>
@@ -63,7 +66,7 @@
 #endif
 
 // 15U * 60U * 1000U = 15 minutes in milliseconds
-#define CONFIG_LWIP_SNTP_UPDATE_DELAY (15 * 60 * 1000)  // 15 minutes
+#define CONFIG_LWIP_SNTP_UPDATE_DELAY (60 * 60 * 1000)  // 60 minutes
 
 // 4-PIN connector type HY2.0-4P
 #define PORT_B_GROVE_OUT_PIN 2
@@ -72,13 +75,11 @@
 bool lStart = true;
 bool display_on = true;
 bool sync_time = false;
+bool buttonPressed = false;
 time_t time_sync_epoch_at_start = 0;
 time_t last_time_sync_epoch = 0; // see: time_sync_notification_cb()
 
 // M5Dial screen 1.28 Inch 240x240px. Display device: GC9A01
-static constexpr const int hori[] PROGMEM = {0, 60, 120, 180, 220};
-static constexpr const int vert[] PROGMEM = {0, 60, 120, 180, 220};
-
 // M5Dial touch driver: FT3267
 
 bool TimeToChangeZone = false;
@@ -126,6 +127,13 @@ void create_maps() {
 void ntp_sync_notification_txt(bool show) {
   int dw = M5Dial.Display.width();
   if (show) {
+    /* Only send command to make sound by the M5 Atom Echo when the display is on,
+       because when the user has put the display off, he/she probably wants to go to bed/sleep.
+       In that case we don't want nightly sounds!
+    */
+    if (display_on) {
+      send_cmd_to_AtomEcho(); // Send a digital signal to the Atom Echo to produce a beep
+    }
     M5Dial.Display.setCursor(dw/2-25, 20);
     M5Dial.Display.setTextColor(TFT_GREEN, TFT_BLACK);
     M5Dial.Display.print("TS");
@@ -134,13 +142,6 @@ void ntp_sync_notification_txt(bool show) {
     M5Dial.Display.setTextColor(TFT_BLACK, TFT_BLACK);
     M5Dial.Display.print("TS");
     M5Dial.Display.setTextColor(TFT_ORANGE, TFT_BLACK);
-    /* Only send command to make sound by the M5 Atom Echo when the display is on,
-       because when the user has put the display off, he/she probably wants to go to bed/sleep.
-       In that case we don't want nightly sounds!
-    */
-    if (display_on) {
-      send_cmd_to_AtomEcho(); // Send a digital signal to the Atom Echo to produce a beep
-    }
   } else {
     //M5Dial.Display.fillRect(dw/2-25, 15, 50, 25, TFT_BLACK);
     M5Dial.Display.fillRect(0, 0, dw-1, 55, TFT_BLACK);
@@ -180,7 +181,7 @@ void esp_sntp_initialize() {
    if (esp_sntp_enabled()) { 
     esp_sntp_stop();  // prevent initialization error
   }
-  esp_sntp_setoperatingmode(SNTP_OPMODE_POLL);
+  esp_sntp_setoperatingmode(ESP_SNTP_OPMODE_POLL);
   esp_sntp_setservername(0, NTP_SERVER1);
   esp_sntp_set_sync_interval(CONFIG_LWIP_SNTP_UPDATE_DELAY);
   esp_sntp_set_time_sync_notification_cb(time_sync_notification_cb); // Set the notification callback function
@@ -245,16 +246,13 @@ void disp_data(void) {
     struct tm my_timeinfo;
     if (!getLocalTime(&my_timeinfo)) return;
 
-    M5.Display.clear(TFT_BLACK);
-    M5Dial.Display.setTextColor(TFT_ORANGE, TFT_BLACK);
-
     char elem_zone[50];
     strncpy(elem_zone, std::get<0>(zones_map[zone_idx]).c_str(), sizeof(elem_zone) - 1);
     elem_zone[sizeof(elem_zone) - 1] = '\0'; // Ensure null termination
 
     char part1[20], part2[20], part3[20], part4[20];
     char copiedString[50], copiedString2[50];
-
+  
     memset(part1, 0, sizeof(part1));
     memset(part2, 0, sizeof(part2));
     memset(part3, 0, sizeof(part3));
@@ -266,7 +264,7 @@ void disp_data(void) {
     char *index2 = nullptr; 
     char *index3 = strchr(elem_zone, '_'); // index to the occurrance of an underscore character (e.g.: Sao_Paulo)
     int disp_data_view_delay = 1000;
-
+    static constexpr const char txt1[] PROGMEM = "disp_data(): BtnA pressed";
     strncpy(copiedString, elem_zone, sizeof(copiedString) - 1);
     copiedString[sizeof(copiedString) - 1] = '\0'; // Ensure null termination
     // Check if index1 is valid and within bounds
@@ -279,7 +277,7 @@ void disp_data(void) {
       strncpy(copiedString2, index1 + 1, sizeof(copiedString2) - 1);
       copiedString2[sizeof(copiedString2) - 1] = '\0'; // Ensure null termination
       if (index3 != nullptr) {
-        // Replace underscores with spaces in copiedString
+        // Replace underscores with spaces in copiedString2
         for (int i = 0; i < sizeof(copiedString2); i++) {
           if (copiedString2[i] == '_') {
             copiedString2[i] = ' ';
@@ -300,9 +298,15 @@ void disp_data(void) {
         part2[sizeof(part2) - 1] = '\0'; // Ensure null termination
       }
     }
+    M5Dial.update();
     if (ck_touch() > 0) return;
-    if (ck_BtnA()) return;
+    ck_BtnA();
+    if (buttonPressed) return;
 
+    // --------------- 1st view ---------------
+    M5Dial.Display.clear(); // M5Dial.Display.clear(TFT_BLACK); ;
+    M5Dial.Display.setTextColor(TFT_ORANGE, TFT_BLACK);
+    
     if (index1 != nullptr && index2 != nullptr) {
         M5Dial.Display.setCursor(50, 65);
         M5Dial.Display.print(part1);
@@ -321,19 +325,25 @@ void disp_data(void) {
     }
     delay(disp_data_view_delay);
 
+    M5Dial.update();
+    ck_BtnA();
     if (ck_touch() > 0) return;
-    if (ck_BtnA()) return;
-
+    if (buttonPressed) return;
+    
+    // --------------- 2nd view ---------------
     M5Dial.Display.clear();
     M5Dial.Display.setCursor(50, 65);
     M5Dial.Display.print("Zone");
     M5Dial.Display.setCursor(50, 120);
     M5Dial.Display.print(&my_timeinfo, "%Z %z");
-
     delay(disp_data_view_delay);
-    if (ck_touch() > 0) return;
-    if (ck_BtnA()) return;
 
+    M5Dial.update();
+    ck_BtnA();
+    if (ck_touch() > 0) return;
+    if (buttonPressed) return;
+
+    // --------------- 3rd view ---------------
     M5Dial.Display.clear();
     M5Dial.Display.setCursor(50, 65);
     M5Dial.Display.print(&my_timeinfo, "%A");
@@ -341,11 +351,14 @@ void disp_data(void) {
     M5Dial.Display.print(&my_timeinfo, "%B %d");
     M5Dial.Display.setCursor(50, 170);
     M5Dial.Display.print(&my_timeinfo, "%Y");
-
     delay(disp_data_view_delay);
-    if (ck_touch() > 0) return;
-    if (ck_BtnA()) return;
 
+    M5Dial.update();
+    ck_BtnA();
+    if (ck_touch() > 0) return;
+    if (buttonPressed) return;
+
+    // --------------- 4th view ---------------
     M5Dial.Display.clear();
     M5Dial.Display.setCursor(40, 65);
     M5Dial.Display.print(&my_timeinfo, "%H:%M:%S local");
@@ -359,23 +372,25 @@ void disp_data(void) {
     delay(disp_data_view_delay);
 }
 
-void disp_msg(String str) {
-  M5Dial.Display.fillScreen(TFT_BLACK);
+void disp_msg(String str, bool clr_at_end_func = false) {
+  M5Dial.Display.clear(); // M5Dial.Display.fillScreen(TFT_BLACK); 
   M5Dial.Display.setBrightness(200);  // Make more brightness than normal
-  M5Dial.Display.clear();
   M5Dial.Display.setTextDatum(middle_center);
   M5Dial.Display.setTextColor(TFT_NAVY); // (BLUE);
   M5Dial.Display.drawString(str, M5Dial.Display.width() / 2, M5Dial.Display.height() / 2);
   //M5Dial.Display.drawString(str2, M5Dial.Display.width() / 2, M5Dial.Display.height() / 2);
   delay(6000);
-  M5Dial.Display.fillScreen(TFT_BLACK);
-  M5Dial.Display.setBrightness(50); // Restore brightness to normal
-  M5Dial.Display.clear();
+  if (clr_at_end_func)
+  {
+    M5Dial.Display.clear(); // M5Dial.Display.fillScreen(TFT_BLACK); 
+    M5Dial.Display.setBrightness(50); // Restore brightness to normal
+  }
 }
 
 bool connect_WiFi(void) {
   #define WIFI_SSID     SECRET_SSID // "YOUR WIFI SSID NAME"
   #define WIFI_PASSWORD SECRET_PASS //"YOUR WIFI PASSWORD"
+  static constexpr const char txt0[] PROGMEM = "WiFi ";
   bool ret = false;
   WiFi.begin( WIFI_SSID, WIFI_PASSWORD );
 
@@ -384,24 +399,24 @@ bool connect_WiFi(void) {
   
   if (WiFi.status() == WL_CONNECTED) {
     ret = true;
-    static constexpr const char txt3[] PROGMEM = "\r\nWiFi Connected";
-    Serial.println(txt3);
+    static constexpr const char txt1[] PROGMEM = "Connected";
+    Serial.printf("\r\n%s%s\n", txt0, txt1);
   }
   else {
-    static constexpr const char txt6[] PROGMEM = "WiFi connection failed.";
-    Serial.printf("\r\n %s\n", txt6);
+    static constexpr const char txt2[] PROGMEM = "connection failed.";
+    Serial.printf("%s%s\n", txt0, txt2);
   }
   return ret;
 }
 
-bool ck_BtnA() {
-  bool buttonPressed = false;
-  M5Dial.update();
-  //if (M5Dial.BtnA.isPressed())
-  if (M5Dial.BtnA.wasPressed()) { // 100 mSecs
+void ck_BtnA() {
+  bool ret = false;
+  if (M5Dial.BtnA.wasPressed() || M5Dial.BtnA.wasHold()) { // 100 mSecs
+    Serial.println(F("BtnA was pressed or was hold"));
     buttonPressed = true;
   }
-  return buttonPressed;
+  else
+    buttonPressed = false;
 }
 
 bool lastTouchState = false;
@@ -412,7 +427,7 @@ unsigned int ck_touch(void) {
   bool touchState = false;
   unsigned int ck_touch_cnt = 0;
 
-  M5Dial.update();
+  //M5Dial.update();
 
   auto t = M5Dial.Touch.getDetail();
   bool currentTouchState = t.state; // M5.Touch.ispressed();
@@ -456,8 +471,7 @@ bool ck_RFID(void) {
     if (piccType != MFRC522::PICC_TYPE_MIFARE_MINI &&
           piccType != MFRC522::PICC_TYPE_MIFARE_1K &&
           piccType != MFRC522::PICC_TYPE_MIFARE_4K) {
-      M5Dial.Display.fillScreen(TFT_BLACK);
-      M5Dial.Display.clear();
+      M5Dial.Display.clear(); // M5Dial.Display.fillScreen(TFT_BLACK); 
       M5Dial.Display.setTextDatum(middle_center);
       M5Dial.Display.setTextColor(TFT_RED);
       M5Dial.Display.drawString("card not", M5Dial.Display.width() / 2, M5Dial.Display.height() / 2 - 50);
@@ -502,7 +516,7 @@ void start_scrn(void) {
   static constexpr const int vert2[] PROGMEM = {0, 60, 90, 120, 150}; 
   int x = 0;
 
-  M5.Display.clear(TFT_BLACK);
+  M5Dial.Display.clear(); // M5Dial.Display.clear(TFT_BLACK); ;
   M5Dial.Display.setTextColor(TFT_RED, TFT_BLACK);
   //M5Dial.Display.setFont(&fonts::FreeSans18pt7b);
   for (int i = 0; i < 4; ++i) {
@@ -522,6 +536,15 @@ void send_cmd_to_AtomEcho(void) {
     delay(100);
     digitalWrite(PORT_B_GROVE_OUT_PIN, LOW);
     delay(100); 
+}
+
+/* Called twice from within loop() */
+char* merge_txts(const char* t1, const char* t2)
+{
+  char* result = new char[strlen(t1) + strlen(t2) + 1];
+  strcpy(result, t1); // Copy the first string into result
+  strcat(result, t2);
+  return result;
 }
 
 void setup(void) {
@@ -554,7 +577,7 @@ void setup(void) {
   M5Dial.Display.init();
   M5Dial.Display.setBrightness(50);  // 0-255
   M5Dial.Display.setRotation(0);
-  M5Dial.Display.fillScreen(TFT_BLACK);
+  M5Dial.Display.clear(); // M5Dial.Display.fillScreen(TFT_BLACK); 
   M5Dial.Display.setTextColor(TFT_ORANGE, TFT_BLACK);
   M5Dial.Display.setColorDepth(1); // mono color
   M5Dial.Display.setFont(&fonts::FreeSans12pt7b);
@@ -597,13 +620,16 @@ void setup(void) {
     zone_idx = 0; // needed to set here. Is needed in setTimezone()
     setTimezone();
   }
-  M5.Display.clear(TFT_BLACK);
+  M5Dial.Display.clear(); // M5Dial.Display.clear(TFT_BLACK); ;
 }
 
 void loop() {
-  static constexpr const char txt0[] PROGMEM = "loop() running on core ";
-  Serial.print(txt0);
+  static constexpr const char txt0[] PROGMEM = "loop(): ";
+  static constexpr const char txt1[] PROGMEM = "running on core ";
+  static constexpr const char txt2[] PROGMEM = "SNTP sync interval: ";
+  Serial.print(txt1);
   Serial.println(xPortGetCoreID());
+  Serial.printf("%s%lu minutes\n", txt2 ,CONFIG_LWIP_SNTP_UPDATE_DELAY/60000);
 
   const char* txts[] PROGMEM = {    // longest string 14 (incl \0)
   "Waking up!",     //  0
@@ -616,7 +642,9 @@ void loop() {
   "RTC updated ",   //  7
   "with SNTP ",     //  8 
   "datetime",       //  9
-  "Free heap: "     // 10
+  "Free heap: ",    // 10
+  "WiFi  ",         // 11
+  "reconnecting"    // 12
   };
 
   const unsigned long zone_chg_interval_t PROGMEM = 25 * 1000L; // 25 seconds
@@ -625,6 +653,7 @@ void loop() {
   unsigned long zone_chg_start_t = millis();
   unsigned int touch_cnt = 0;
   int connect_try = 0;
+  bool disp_msg_shown = false;
   bool i_am_asleep = false;
   bool display_state = display_on;
   
@@ -634,7 +663,13 @@ void loop() {
   */
   bool use_rfid = true; 
 
+  Serial.print(txt0);
+  Serial.printf("display_on    = %d\n", display_on);
+  Serial.printf("        display_state = %d\n", display_state);
+  Serial.printf("        use_rfid      = %d\n", use_rfid);
+
   while (true) {
+    M5Dial.update(); // read button or touch state
     if (use_rfid) {
       if (ck_RFID()) {
         touch_cnt++;
@@ -663,34 +698,47 @@ void loop() {
           M5.Display.wakeup();
           i_am_asleep = false;
           M5.Display.setBrightness(50);  // 0 - 255
-          disp_msg(txts[0]);
+          disp_msg(txts[0], true);
           M5Dial.Display.setTextColor(TFT_ORANGE, TFT_BLACK);
-          M5.Display.clear(TFT_BLACK);
+          M5Dial.Display.clear(); // M5Dial.Display.clear(TFT_BLACK); ;
         }
       } else {
         if (!i_am_asleep) {
           // See: https://github.com/m5stack/m5-docs/blob/master/docs/en/api/lcd.md
           // M5Dial.Power.powerOff(); // shutdown
-          char* result = new char[15];
-          strcpy(result, txts[4]); // Copy the first string into result
-          strcat(result, txts[1]);
-          disp_msg(result);
+          char* result = new char[30];
+          result = merge_txts(txts[4], txts[1]);
+          disp_msg(result, true);
           delete[] result;  // free memory
           M5.Display.sleep();
           i_am_asleep = true;
           M5.Display.setBrightness(0);
-          M5Dial.Display.fillScreen(TFT_BLACK); 
+          M5Dial.Display.clear(); // M5Dial.Display.fillScreen(TFT_BLACK);  
         }
       }
     }
+    //if (ck_BtnA()) {
+    M5Dial.update();
 
-    if (ck_BtnA()) {
+    if (!buttonPressed)
+      ck_BtnA(); // Sets/resets the global variable buttonPressed
+
+    if (buttonPressed) {
+      //Serial.println(F("BtnA preesed in loop()"));
       // We have a button press so do a software reset
-      disp_msg(txts[2]); // there is already a wait of 6000 in disp_msg()
-      //delay(3000);
+      disp_msg(txts[2], true); // there is already a wait of 6000 in disp_msg()
       esp_restart();
     } else {
+      // WiFi.disconnect();  // FOR TEST ONLY: FORCE DISCONNECT TO SEE REACTION BELOW
       if (WiFi.status() != WL_CONNECTED) { // Check if we're still connected to WiFi
+        if (!disp_msg_shown)
+        {
+          char* result = new char[30];
+          result = merge_txts(txts[11], txts[12]);
+          disp_msg(result, false);
+          delete[] result;  // free memory
+          disp_msg_shown = true;
+        }
         if (connect_WiFi())
           connect_try = 0;  // reset count
         else
@@ -699,7 +747,9 @@ void loop() {
         if (connect_try >= 10) {
           break;
         }
+        delay(1000);
       }
+      disp_msg_shown = false;
 
       if (sync_time || lStart) { 
         if (sync_time) {
@@ -707,7 +757,7 @@ void loop() {
             if (set_RTC()) {
                 sync_time = false;
                 Serial.printf("%s%s%s\n", txts[7], txts[8], txts[9]);  // was: txt[16]
-                Serial.printf("%s%u\n", txts[10], ESP.getFreeHeap()); 
+                //Serial.printf("%s%u\n", txts[10], ESP.getFreeHeap()); 
             }
           }
         }
@@ -746,7 +796,7 @@ void loop() {
     lStart = false;
     M5Dial.update(); // read btn state etc.
   }
-  disp_msg(txts[3]);
+  disp_msg(txts[3], false); // don't erase msg 
   //M5Dial.update();
   /* Go into an endless loop after WiFi doesn't work */
   do {
